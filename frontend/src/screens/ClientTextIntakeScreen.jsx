@@ -51,21 +51,26 @@ const ClientTextIntakeScreen = ({ initialData }) => {
   });
 
   const handleSubmit = async (values, { setSubmitting }) => {
+    console.log('Submitting form data:', values);
     try {
       const config = {
         headers: {
           'Content-Type': 'application/json',
         },
       };
+      console.log('Sending request to /api/intakes/submit with intakeLink:', intakeLink);
       await axios.post('/api/intakes/submit', { intakeLink, formData: values }, config);
+      console.log('Form submitted successfully!');
       toast.success('Intake submitted successfully!');
       navigate('/'); // Redirect to home or a confirmation page
     } catch (error) {
+      console.error('Error submitting form:', error);
       toast.error(error.response && error.response.data.message
         ? error.response.data.message
         : error.message);
     } finally {
       setSubmitting(false);
+      console.log('Form submission process finished.');
     }
   };
 

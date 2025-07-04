@@ -2,14 +2,14 @@
 const asyncHandler = require('express-async-handler');
 const Intake = require('../models/intakeModel');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { syncToClio, getClioStatus } = require('./clioController');
+const { syncToClio, getClioStatus, syncIntakeToClio } = require('./clioController');
 const User = require('../models/userModel');
 
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const generateSummary = async (formData) => {
-  const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
   const prompt = `Generate a concise summary of the following immigration intake form data:
 ${JSON.stringify(formData, null, 2)}
 
