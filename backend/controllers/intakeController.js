@@ -4,6 +4,7 @@ const Intake = require('../models/intakeModel');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { syncToClio, getClioStatus, syncIntakeToClio } = require('./clioController');
 const User = require('../models/userModel');
+const sendEmail = require('../utils/sendEmail');
 
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -106,6 +107,28 @@ const submitIntakeForm = asyncHandler(async (req, res) => {
     }
 
     res.json(updatedIntake);
+
+    // Send email to client
+    if (updatedIntake.formData.email) {
+      const subject = `Your Intake Submission for ${updatedIntake.intakeType}`;
+      const text = `Dear ${updatedIntake.formData.fullName},
+
+Thank you for submitting your intake form. Here is a summary of your submission:
+
+${updatedIntake.summary}
+
+We will review your information and get back to you shortly.
+
+Sincerely,
+Your Legal Team`;
+      const html = `<p>Dear ${updatedIntake.formData.fullName},</p>
+<p>Thank you for submitting your intake form. Here is a summary of your submission:</p>
+<p>${updatedIntake.summary}</p>
+<p>We will review your information and get back to you shortly.</p>
+<p>Sincerely,<br>Your Legal Team</p>`;
+
+      sendEmail(updatedIntake.formData.email, subject, updatedIntake.formData, updatedIntake.summary);
+    }
   } else {
     res.status(404);
     throw new Error('Intake not found');
