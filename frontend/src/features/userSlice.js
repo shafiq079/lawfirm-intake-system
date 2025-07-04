@@ -45,13 +45,24 @@ export const checkClioConnection = createAsyncThunk('user/checkClioConnection', 
   return data.isConnected;
 });
 
+export const logoutUser = createAsyncThunk('user/logoutUser', async (_, { getState }) => {
+  const { user: { userInfo } } = getState();
+  const config = {
+    headers: {
+      Authorization: `Bearer ${userInfo.token}`,
+    },
+  };
+  await axios.post('/api/users/logout', {}, config);
+  localStorage.removeItem('userInfo');
+  return null;
+});
+
 const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
     logout: (state) => {
       state.userInfo = null;
-      localStorage.removeItem('userInfo');
     },
   },
   extraReducers: (builder) => {
@@ -80,6 +91,10 @@ const userSlice = createSlice({
       })
       .addCase(checkClioConnection.fulfilled, (state, action) => {
         state.clioConnected = action.payload;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.userInfo = null;
+        state.clioConnected = false;
       });
   },
 });

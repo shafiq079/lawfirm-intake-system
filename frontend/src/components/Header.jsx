@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { logout } from '../features/userSlice';
+import { logout, logoutUser } from '../features/userSlice';
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -14,7 +14,7 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const logoutHandler = () => {
-    dispatch(logout());
+    dispatch(logoutUser());
     navigate('/login');
   };
 

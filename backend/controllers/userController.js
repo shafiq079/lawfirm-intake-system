@@ -50,4 +50,18 @@ const authUser = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { registerUser, authUser };
+const logoutUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (user) {
+    user.clioAccessToken = undefined;
+    user.clioRefreshToken = undefined;
+    await user.save();
+    res.status(200).json({ message: 'Logged out successfully and Clio tokens cleared.' });
+  } else {
+    res.status(404);
+    throw new Error('User not found');
+  }
+});
+
+module.exports = { registerUser, authUser, logoutUser };

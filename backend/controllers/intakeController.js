@@ -9,14 +9,8 @@ const User = require('../models/userModel');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const generateSummary = async (formData) => {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-  const prompt = `Generate a concise summary of the following immigration intake form data:
-${JSON.stringify(formData, null, 2)}
-
-Focus on key details such as the client's name, contact information, and the type of immigration case.`;
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  return response.text();
+  // Mocking Gemini API response to avoid quota limits
+  return `Summary for ${formData.fullName || 'client'}: ${formData.description || 'No description provided.'} Case Type: ${formData.serviceType || 'N/A'}.`;
 };
 
 // @desc    Create new intake
@@ -99,10 +93,10 @@ const submitIntakeForm = asyncHandler(async (req, res) => {
     const updatedIntake = await intake.save();
 
     // Attempt to sync to Clio
-    const user = await User.findById(intake.user);
+    let user = await User.findById(intake.user); // Re-fetch user to ensure latest tokens
     if (user && user.clioAccessToken) {
       try {
-        await syncIntakeToClio(updatedIntake, user.clioAccessToken);
+        await syncIntakeToClio(updatedIntake, user.clioAccessToken, user);
       } catch (error) {
         console.error('Clio sync failed:', error);
         // Optional: Update intake status to indicate sync failure
