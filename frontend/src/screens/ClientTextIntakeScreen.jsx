@@ -10,16 +10,16 @@ const ClientTextIntakeScreen = ({ initialData }) => {
   const { intakeLink } = useParams();
   const navigate = useNavigate();
   const initialValues = {
-    fullName: initialData?.fullName || '',
-    email: initialData?.email || '',
-    phoneNumber: initialData?.phoneNumber || '',
-    serviceType: '',
-    description: initialData?.description || '',
-    visaType: '',
+    fullName: initialData?.structuredData?.['full name'] || initialData?.fullName || '',
+    email: initialData?.structuredData?.email || initialData?.email || '',
+    phoneNumber: initialData?.structuredData?.phoneNumber || initialData?.phoneNumber || '',
+    serviceType: initialData?.structuredData?.['document type']?.toLowerCase().includes('passport') || initialData?.structuredData?.['document type']?.toLowerCase().includes('visa') || initialData?.structuredData?.['document type']?.toLowerCase().includes('green card') ? 'immigration' : '',
+    description: initialData?.text || initialData?.description || '',
+    visaType: initialData?.structuredData?.['document type'] || '',
     caseNumber: '',
   };
 
-  // Attempt to pre-fill serviceType and visaType based on initialData.caseType
+  // Attempt to pre-fill serviceType and visaType based on initialData.caseType or structuredData
   if (initialData?.caseType) {
     const lowerCaseCaseType = initialData.caseType.toLowerCase();
     if (lowerCaseCaseType.includes('visa') || lowerCaseCaseType.includes('green card') || lowerCaseCaseType.includes('asylum') || lowerCaseCaseType.includes('citizenship')) {
@@ -31,6 +31,12 @@ const ClientTextIntakeScreen = ({ initialData }) => {
       initialValues.serviceType = 'criminal';
     } else {
       initialValues.serviceType = 'other';
+    }
+  } else if (initialData?.structuredData?.['document type']) {
+    const lowerCaseDocumentType = initialData.structuredData['document type'].toLowerCase();
+    if (lowerCaseDocumentType.includes('passport') || lowerCaseDocumentType.includes('visa') || lowerCaseDocumentType.includes('green card')) {
+      initialValues.serviceType = 'immigration';
+      initialValues.visaType = initialData.structuredData['document type'];
     }
   }
 

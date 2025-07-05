@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import Tooltip from './Tooltip';
 
 const DocumentUpload = ({ onOcrComplete }) => {
@@ -11,9 +12,14 @@ const DocumentUpload = ({ onOcrComplete }) => {
 
   const fileChangeHandler = (event) => {
     const file = event.target.files[0];
-    setSelectedFile(file);
-    setExtractedText('');
-    setError(null);
+    if (file && file.type.startsWith('image/')) {
+      setSelectedFile(file);
+      setExtractedText('');
+      setError(null);
+    } else {
+      setSelectedFile(null);
+      toast.error('Please select an image file (e.g., JPG, PNG).');
+    }
   };
 
   const fileUploadHandler = async () => {
@@ -26,7 +32,7 @@ const DocumentUpload = ({ onOcrComplete }) => {
     setError(null);
 
     const formData = new FormData();
-    formData.append('document', selectedFile);
+    formData.append('image', selectedFile);
 
     try {
       const config = {
@@ -35,7 +41,7 @@ const DocumentUpload = ({ onOcrComplete }) => {
           Authorization: `Bearer ${localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')).token : ''}`,
         },
       };
-      const { data } = await axios.post('/api/upload/ocr', formData, config);
+      const { data } = await axios.post('/api/upload', formData, config);
       setExtractedText(data.text);
       if (onOcrComplete) {
         onOcrComplete({ text: data.text });
