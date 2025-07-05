@@ -12,12 +12,14 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const deepgram = new DeepgramClient(process.env.DEEPGRAM_API_KEY);
 
 // Helper function to transcribe audio using Deepgram
-const transcribeAudio = async (filePath) => {
+const transcribeAudio = async (audioBuffer, mimetype) => {
+  console.log('Transcribing audio with Deepgram:', { bufferLength: audioBuffer.length, mimetype });
   const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
-    fs.readFileSync(filePath),
+    audioBuffer,
     {
       smart_format: true,
       model: 'nova',
+      mimetype: mimetype,
     },
   );
 
@@ -183,13 +185,15 @@ const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWI
 // @access  Public
 const handleVoiceCall = asyncHandler(async (req, res) => {
   const twiml = new VoiceResponse();
+  const intakeLink = req.query.intakeLink; // Get intakeLink from query params
 
-  twiml.say('Hello, welcome to the AI intake system. Please tell me your full name.');
+  twiml.say('Hello, welcome to the AI intake system. Please say "English" for English or "Español" for Spanish.');
 
   twiml.gather({
     input: 'speech',
-    action: '/api/voice/gather',
+    action: `/api/voice/gather?intakeLink=${intakeLink}&step=language_selection`,
     speechTimeout: 'auto',
+    language: 'en-US', // Default to English for language selection
   });
 
   res.type('text/xml');
@@ -220,4 +224,112 @@ const initiateVoiceCall = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { handleVoiceCall, initiateVoiceCall, processVoice };
+const Intake = require('../models/intakeModel');
+const { getNextQuestion, analyzeSpeechWithGemini, formQuestions } = require('../utils/voiceBotLogic');
+
+const handleGuidedVoiceIntake = asyncHandler(async (req, res) => {
+  const { intakeLink, currentQuestionIndex, preferredLanguage } = req.body;
+  const file = req.file; // Audio file from frontend
+
+  if (!file) {
+    return res.status(400).json({ message: 'No audio file provided.' });
+  }
+
+  let intake = await Intake.findOne({ intakeLink });
+
+  if (!intake) {
+    return res.status(404).json({ message: 'Intake not found.' });
+  }
+
+  let transcription; // Declare transcription here
+
+  try {
+    // Log file details before transcription
+    console.log('Received audio file:', {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      bufferLength: file.buffer.length,
+    });
+
+    try {
+      transcription = await transcribeAudio(file.buffer, file.mimetype); // Assign to the outer variable
+      console.log('Frontend Voice Transcription:', transcription);
+    } catch (deepgramError) {
+      console.error('Deepgram transcription failed:', deepgramError);
+      // Re-throw the error to be caught by the outer catch block
+      throw deepgramError;
+    }
+
+    // Determine the current question based on the index
+    const currentQuestion = formQuestions[currentQuestionIndex];
+
+    const analysis = await analyzeSpeechWithGemini(transcription, intake.formData, currentQuestion, preferredLanguage);
+
+    if (analysis.action === 'set_language') {
+      intake.formData.preferredLanguage = analysis.value;
+      // preferredLanguage is updated in the frontend state
+      await intake.save();
+    } else if (analysis.action === 'update_data') {
+      intake.formData[analysis.field] = analysis.value;
+      await intake.save();
+    } else if (analysis.action === 'clarify') {
+      return res.json({ action: 'clarify', question: analysis.question });
+    }
+
+    // Determine the next question to ask
+    const nextQuestion = getNextQuestion(intake.formData, parseInt(currentQuestionIndex, 10) + 1);
+
+    if (nextQuestion) {
+      res.json({
+        action: 'ask_question',
+        question: nextQuestion.question,
+        field: nextQuestion.field,
+        index: nextQuestion.index,
+        type: nextQuestion.type,
+        options: nextQuestion.options,
+        twilioLang: nextQuestion.twilioLang,
+        updatedFormData: intake.formData, // Send updated form data back to frontend
+      });
+    } else {
+      // All questions answered
+      intake.status = 'Completed';
+      await intake.save();
+
+      // Send summary email (re-using logic from voiceGatherController)
+      const summary = `Intake for ${intake.formData.firstName || ''} ${intake.formData.lastName || ''} has been completed via guided voice intake.`;
+      const attorneyEmail = process.env.ATTORNEY_EMAIL || 'attorney@example.com';
+      const userEmail = intake.formData.emailAddress;
+
+      if (userEmail) {
+        await sendEmail(userEmail, 'Your Immigration Intake Summary', `Dear ${intake.formData.firstName || 'Client'},
+
+Thank you for completing your immigration intake form via our voice bot. Here is a summary of the information we collected:
+
+${JSON.stringify(intake.formData, null, 2)}
+
+We will be in touch shortly.
+
+Sincerely,
+Your Legal Team`);
+      }
+
+      await sendEmail(attorneyEmail, `New Guided Voice Intake Completed: ${intake.formData.firstName || ''} ${intake.formData.lastName || ''}`, `A new guided voice intake has been completed.
+
+Intake ID: ${intake._id}
+Intake Link: ${process.env.SERVER_URL}/admin/intakes/${intake._id}
+
+Full Data:
+${JSON.stringify(intake.formData, null, 2)}
+
+Risk Alerts: ${intake.riskAlerts.join(', ') || 'None'}`);
+
+      res.json({ action: 'complete_intake', updatedFormData: intake.formData });
+    }
+  } catch (error) {
+    console.error('Error in guided voice intake:', error);
+    res.status(500).json({ message: 'Error processing voice input.', error: error.message });
+  }
+});
+
+module.exports = { handleVoiceCall, initiateVoiceCall, processVoice, handleGuidedVoiceIntake };

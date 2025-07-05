@@ -30,6 +30,14 @@ const intakeSchema = mongoose.Schema(
       type: [String],
       default: [],
     },
+    clioSyncStatus: {
+      type: String,
+      enum: ['Not Synced', 'Synced', 'Pending', 'Failed'],
+      default: 'Not Synced',
+    },
+    clioMatterId: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

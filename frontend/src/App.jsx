@@ -6,12 +6,10 @@ import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import AdminDashboardScreen from './screens/AdminDashboardScreen';
 import CreateIntakeScreen from './screens/CreateIntakeScreen';
-import ClientIntakeScreen from './screens/ClientIntakeScreen';
 import IntakeDetailScreen from './screens/IntakeDetailScreen';
 import PrivateRoute from './components/PrivateRoute';
-import VoiceIntakeScreen from './screens/VoiceIntakeScreen';
-import ClientTextIntakeScreen from './screens/ClientTextIntakeScreen';
-import DocumentUploadScreen from './screens/DocumentUploadScreen';
+
+import SmartIntakeScreen from './screens/SmartIntakeScreen';
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
@@ -24,10 +22,9 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/register" element={<RegisterScreen />} />
-          <Route path="/intake/:intakeLink" element={<ClientIntakeScreen />} />
-          <Route path="/text-intake" element={<ClientTextIntakeScreen />} /> {/* New Text Intake Route */}
-          <Route path="/document-upload" element={<DocumentUploadScreen />} /> {/* New Document Upload Route */}
-          <Route path="/voice-intake" element={<VoiceIntakeScreen />} /> {/* New Voice Intake Route */}
+          
+          <Route path="/smart-intake/:method" element={<SmartIntakeScreen />} />
+          <Route path="/intake/:intakeLink" element={<SmartIntakeScreen />} />
           {/* Private Routes */}
           <Route path="/" element={<PrivateRoute />}>
             <Route path="/" element={<HomeScreen />} />
