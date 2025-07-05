@@ -11,8 +11,14 @@ if (!CLIO_CLIENT_ID || !CLIO_CLIENT_SECRET || !CLIO_REDIRECT_URI || !CLIO_AUTH_S
 
 const refreshClioAccessToken = async (userId, refreshToken) => {
   try {
+    if (!refreshToken) {
+      console.error('No refresh token provided');
+      return null;
+    }
+
     console.log('Attempting to refresh token for user:', userId);
     console.log('Refresh token used:', refreshToken);
+    
     const params = new URLSearchParams();
     params.append('grant_type', 'refresh_token');
     params.append('client_id', CLIO_CLIENT_ID);
@@ -29,6 +35,11 @@ const refreshClioAccessToken = async (userId, refreshToken) => {
     const tokens = await tokenResponse.json();
     console.log('Clio Token Refresh Response:', tokens);
 
+    if (!tokenResponse.ok) {
+      console.error('Token refresh failed:', tokens);
+      return null;
+    }
+
     if (tokens.access_token) {
       const user = await User.findById(userId);
       if (user) {
@@ -40,9 +51,12 @@ const refreshClioAccessToken = async (userId, refreshToken) => {
         await user.save();
         console.log('Clio tokens refreshed and saved successfully.');
         return tokens.access_token;
+      } else {
+        console.error('User not found for token refresh:', userId);
+        return null;
       }
     }
-    console.error('Failed to get new access token from refresh.');
+    console.error('Failed to get new access token from refresh response:', tokens);
     return null;
   } catch (error) {
     console.error('Error refreshing Clio token:', error);
@@ -50,114 +64,172 @@ const refreshClioAccessToken = async (userId, refreshToken) => {
   }
 };
 
+const makeClioApiCall = async (url, method, body, userId, refreshToken, currentAccessToken, maxRetries = 3) => {
+  let retries = 0;
+  let tokenToUse = currentAccessToken;
+
+  while (retries < maxRetries) {
+    const options = {
+      method: method,
+      headers: {
+        Authorization: `Bearer ${tokenToUse}`,
+      },
+    };
+
+    if (method === 'POST') {
+      options.headers['Content-Type'] = 'application/json';
+    }
+
+    if (body) {
+      options.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(url, options);
+
+    if (response.status === 401) {
+      console.warn('Clio access token expired or unauthorized. Attempting to refresh...');
+      retries++; 
+      
+      if (retries >= maxRetries) {
+        throw new Error(`Max retries reached for Clio API call: ${url}`);
+      }
+      
+      const newAccessToken = await refreshClioAccessToken(userId, refreshToken);
+      if (newAccessToken) {
+        tokenToUse = newAccessToken;
+        continue; // Retry the current API call with the new token
+      } else {
+        throw new Error('Failed to refresh Clio access token.');
+      }
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Clio API Error Details:', errorData);
+      console.error('Request Body:', body);
+      throw new Error(errorData.error_description || `Clio API call failed with status ${response.status}: ${url}`);
+    }
+
+    const data = await response.json();
+    return { data, accessToken: tokenToUse }; // Return parsed JSON and the current access token
+  }
+  
+  throw new Error(`Max retries reached for Clio API call: ${url}`);
+};
+
 const syncIntakeToClio = async (intake, token, user) => {
   let currentToken = token;
   let currentUser = user;
-  const MAX_RETRIES = 1; // Only one retry after refresh attempt
-  let retries = 0;
 
-  while (retries <= MAX_RETRIES) {
+  try {
+    // Get the latest user data to ensure we have the most current refresh token
+    currentUser = await User.findById(currentUser._id);
+    if (!currentUser || !currentUser.clioRefreshToken) {
+      throw new Error('User not found or missing Clio refresh token');
+    }
+
+    // 1. Lookup or create contact
+    let contactId = null; // Initialize contactId to null
+
+    // 1. Lookup or create contact
+    let contactSearchResponse;
+    let contactSearchData = null; // Initialize to null
     try {
-      // 1. Lookup or create contact
-      const contactSearchRes = await fetch(`https://app.clio.com/api/v4/contacts.json?query=${intake.formData.email}`, {
-        headers: { Authorization: `Bearer ${currentToken}` },
-      });
-      const contactSearchData = await contactSearchRes.json();
+      contactSearchResponse = await makeClioApiCall(
+        `https://eu.app.clio.com/api/v4/contacts.json?query=${encodeURIComponent(intake.formData.email)}`,
+        'GET',
+        null,
+        currentUser._id,
+        currentUser.clioRefreshToken,
+        currentToken
+      );
+      currentToken = contactSearchResponse.accessToken;
+      contactSearchData = contactSearchResponse.data;
+    } catch (error) {
+      console.warn('Contact search failed, attempting to create new contact:', error.message);
+      // contactSearchData remains null, which will trigger the else block for creation
+    }
 
-      // Handle token expiration/invalidity
-      if (contactSearchData.error === 'invalid_token') {
-        console.warn('Clio access token expired. Attempting to refresh...');
-        const newAccessToken = await refreshClioAccessToken(currentUser._id, currentUser.clioRefreshToken);
-        if (newAccessToken) {
-          currentToken = newAccessToken;
-          currentUser = await User.findById(currentUser._id); // Re-fetch user to ensure latest tokens
-          retries++;
-          continue; // Retry the entire process with the new token
-        } else {
-          throw new Error('Failed to refresh Clio access token.');
-        }
+    if (contactSearchData && contactSearchData.data?.length > 0) {
+      contactId = contactSearchData.data[0].id;
+    } else {
+      if (!intake.formData.fullName) {
+        throw new Error('Contact full name is required for Clio sync.');
       }
-
-      let contactId;
-      if (contactSearchData.data?.length > 0) {
-        contactId = contactSearchData.data[0].id;
-      } else {
-        const newContactRes = await fetch('https://app.clio.com/api/v4/contacts.json', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${currentToken}`,
-          },
-          body: JSON.stringify({
-            data: {
-              type: 'Person',
-              first_name: intake.formData.fullName?.split(' ')[0] || '',
-              last_name: intake.formData.fullName?.split(' ').slice(1).join(' ') || '',
-              email_addresses: intake.formData.email ? [{ type: 'Work', address: intake.formData.email }] : [],
-              phone_numbers: intake.formData.phoneNumber ? [{ type: 'Work', number: intake.formData.phoneNumber }] : [],
-            },
-          }),
-        });
-        console.log('Clio Contact Creation Request Body:', JSON.stringify({
+      const newContactResponse = await makeClioApiCall(
+        'https://eu.app.clio.com/api/v4/contacts.json',
+        'POST',
+        {
           data: {
             type: 'Person',
             first_name: intake.formData.fullName?.split(' ')[0] || '',
             last_name: intake.formData.fullName?.split(' ').slice(1).join(' ') || '',
-            email_addresses: intake.formData.email ? [{ type: 'Work', address: intake.formData.email }] : [],
-            phone_numbers: intake.formData.phoneNumber ? [{ type: 'Work', number: intake.formData.phoneNumber }] : [],
+            email_addresses: intake.formData.email ? [{ name: 'Work', address: intake.formData.email, default_email: true }] : [],
+            phone_numbers: intake.formData.phoneNumber ? [{ name: 'Work', number: intake.formData.phoneNumber, default_number: true }] : [],
           },
-        }, null, 2));
-        const newContact = await newContactRes.json();
-        console.log('Clio Contact Creation Response:', newContact);
-        if (!newContact.data) throw new Error('Failed to create contact');
-        contactId = newContact.data.id;
-      }
-
-      // 2. Create matter
-      const matterRes = await fetch('https://app.clio.com/api/v4/matters.json', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${currentToken}`,
         },
-        body: JSON.stringify({
-          data: {
-            client: { type: 'Contact', id: contactId },
-            status: 'Open',
-            description: `Intake for ${intake.formData.fullName} - ${intake.intakeType || 'N/A'}`,
-          },
-        }),
-      });
-      const matter = await matterRes.json();
-      if (!matter.data) throw new Error('Failed to create matter');
-
-      // 3. Add note
-      if (intake.summary) {
-        await fetch('https://app.clio.com/api/v4/notes.json', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${currentToken}`,
-          },
-          body: JSON.stringify({
-            data: {
-              content: intake.summary,
-              subject_type: 'Matter',
-              subject_id: matter.data.id,
-            },
-          }),
-        });
+        currentUser._id,
+        currentUser.clioRefreshToken,
+        currentToken
+      );
+      currentToken = newContactResponse.accessToken;
+      if (newContactResponse.data && newContactResponse.data.id) {
+        contactId = newContactResponse.data.id;
+      } else {
+        throw new Error('Failed to create contact: No valid contact ID returned from Clio API.');
       }
-
-      intake.status = 'Synced to Clio';
-      await intake.save();
-      return { success: true, intake };
-    } catch (err) {
-      console.error('Clio sync error:', err);
-      return { success: false, message: err.message };
     }
+
+    // Final check for contactId before proceeding to matter creation
+    if (contactId === null) {
+      throw new Error('Clio contact ID could not be obtained after search or creation.');
+    }
+
+    const matterResponse = await makeClioApiCall(
+      'https://eu.app.clio.com/api/v4/matters.json',
+      'POST',
+      {
+        data: {
+          client: { id: contactId },
+          status: 'open',
+          description: `Intake for ${intake.formData.fullName} - ${intake.intakeType || 'N/A'}`,
+        },
+      },
+      currentUser._id,
+      currentUser.clioRefreshToken,
+      currentToken
+    );
+    currentToken = matterResponse.accessToken;
+    if (!matterResponse.data) throw new Error('Failed to create matter');
+    const matter = matterResponse.data;
+
+    if (intake.summary) {
+      const noteResponse = await makeClioApiCall(
+        'https://eu.app.clio.com/api/v4/notes.json',
+        'POST',
+        {
+          data: {
+            content: intake.summary,
+            matter: {
+              id: matter.id,
+            },
+          },
+        },
+        currentUser._id,
+        currentUser.clioRefreshToken,
+        currentToken
+      );
+      currentToken = noteResponse.accessToken;
+    }
+
+    intake.status = 'Synced to Clio';
+    await intake.save();
+    return { success: true, intake };
+
+  } catch (err) {
+    console.error('Clio sync error:', err);
+    return { success: false, message: err.message };
   }
-  return { success: false, message: 'Max retries reached for Clio sync.' };
 };
 
 // @desc    Initiate Clio OAuth2 flow
