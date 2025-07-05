@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getIntakeDetails } from '../features/intakeSlice';
+import { getIntakeByLink, clearIntakeDetails } from '../features/intakeSlice';
 import ClientTextIntakeScreen from './ClientTextIntakeScreen';
 import DocumentUpload from '../components/DocumentUpload';
 import VoiceRecorder from '../components/VoiceRecorder';
@@ -21,8 +21,11 @@ const ClientIntakeScreen = () => {
 
   useEffect(() => {
     if (intakeLink) {
-      dispatch(getIntakeDetails(intakeLink));
+      dispatch(getIntakeByLink(intakeLink));
     }
+    return () => {
+      dispatch(clearIntakeDetails());
+    };
   }, [dispatch, intakeLink]);
 
   const handleRecordingComplete = (data) => {

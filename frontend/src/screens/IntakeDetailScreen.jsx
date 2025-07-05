@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getIntakeDetails } from '../features/intakeSlice';
+import { getIntakeDetails, clearIntakeDetails } from '../features/intakeSlice';
 import { toast } from 'react-toastify';
 
 const IntakeDetailScreen = () => {
@@ -16,6 +16,10 @@ const IntakeDetailScreen = () => {
     if (intakeId) {
       dispatch(getIntakeDetails(intakeId));
     }
+
+    return () => {
+      dispatch(clearIntakeDetails());
+    };
   }, [dispatch, intakeId]);
 
   useEffect(() => {

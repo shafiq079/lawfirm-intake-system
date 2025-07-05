@@ -53,6 +53,26 @@ export const listIntakes = createAsyncThunk(
 
 export const getIntakeDetails = createAsyncThunk(
   'intake/details',
+  async (intakeId, { getState, rejectWithValue }) => {
+    try {
+      const { user: { userInfo } } = getState();
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      };
+
+      const { data } = await axios.get(`/api/intakes/id/${intakeId}`, config);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response.data.message || error.message);
+    }
+  }
+);
+
+export const getIntakeByLink = createAsyncThunk(
+  'intake/getByLink',
   async (intakeLink, { rejectWithValue }) => {
     try {
       const { data } = await axios.get(`/api/intakes/${intakeLink}`);
@@ -69,6 +89,10 @@ const intakeSlice = createSlice({
   reducers: {
     resetSuccess: (state) => {
       state.success = false;
+    },
+    clearIntakeDetails: (state) => {
+      state.selectedIntake = null;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -106,10 +130,21 @@ const intakeSlice = createSlice({
       .addCase(getIntakeDetails.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(getIntakeByLink.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getIntakeByLink.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedIntake = action.payload;
+      })
+      .addCase(getIntakeByLink.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
 
-export const { resetSuccess } = intakeSlice.actions;
+export const { resetSuccess, clearIntakeDetails } = intakeSlice.actions;
 
 export default intakeSlice.reducer;

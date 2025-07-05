@@ -60,6 +60,20 @@ const getIntakeByLink = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Get single intake by ID
+// @route   GET /api/intakes/id/:intakeId
+// @access  Private
+const getIntakeById = asyncHandler(async (req, res) => {
+  const intake = await Intake.findById(req.params.intakeId);
+
+  if (intake) {
+    res.json(intake);
+  } else {
+    res.status(404);
+    throw new Error('Intake not found');
+  }
+});
+
 // @desc    Submit intake form data
 // @route   POST /api/intakes/submit
 // @access  Public
@@ -135,4 +149,4 @@ Your Legal Team`;
   }
 });
 
-module.exports = { createIntake, getIntakes, getIntakeByLink, submitIntakeForm };
+module.exports = { createIntake, getIntakes, getIntakeByLink, submitIntakeForm, getIntakeById };

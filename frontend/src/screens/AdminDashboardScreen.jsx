@@ -21,7 +21,17 @@ const AdminDashboardScreen = () => {
   useEffect(() => {
     dispatch(listIntakes());
     dispatch(checkClioConnection());
-  }, [dispatch]);
+
+    const handleFocus = () => {
+      dispatch(listIntakes());
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [dispatch, userInfo]);
 
   const handleInitiateCall = async (intakeLink) => {
     if (!phoneNumber) {
