@@ -9,10 +9,7 @@ const sendEmail = require('../utils/sendEmail');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const generateSummary = async (formData) => {
-  // Mocking Gemini API response to avoid quota limits
-  return `Summary for ${formData.fullName || 'client'}: ${formData.description || 'No description provided.'} Case Type: ${formData.serviceType || 'N/A'}.`;
-};
+const generateSummary = async (formData) => {  let summary = "";  if (formData.personalInfo) {    summary += `Personal Information:\n`;    summary += `  Name: ${formData.personalInfo.firstName || ''} ${formData.personalInfo.lastName || ''}\n`;    summary += `  Date of Birth: ${formData.personalInfo.dateOfBirth || ''}\n`;    summary += `  Nationality: ${formData.personalInfo.nationality || ''}\n`;    summary += `  Phone: ${formData.personalInfo.phoneNumber || ''}\n`;    summary += `  Email: ${formData.personalInfo.email || ''}\n`;  }  if (formData.immigrationIntent) {    summary += `\nImmigration Intent:\n`;    summary += `  Visa Type: ${formData.immigrationIntent.visaType || ''}\n`;    summary += `  Purpose of Visit: ${formData.immigrationIntent.purposeOfVisit || ''}\n`;    summary += `  Intended Duration: ${formData.immigrationIntent.intendedDuration || ''}\n`;    summary += `  Sponsor Info: ${formData.immigrationIntent.sponsorInformation || ''}\n`;  }  if (formData.passportTravel) {    summary += `\nPassport & Travel:\n`;    summary += `  Passport Number: ${formData.passportTravel.passportNumber || ''}\n`;    summary += `  Expiry Date: ${formData.passportTravel.expiryDate || ''}\n`;    summary += `  Country of Issue: ${formData.passportTravel.countryOfIssue || ''}\n`;    summary += `  Previous Entries: ${formData.passportTravel.previousEntries || ''}\n`;    summary += `  Current Status: ${formData.passportTravel.currentStatus || ''}\n`;  }  if (formData.familyInformation) {    summary += `\nFamily Information:\n`;    summary += `  Marital Status: ${formData.familyInformation.maritalStatus || ''}\n`;    summary += `  Spouse Details: ${formData.familyInformation.spouseDetails || ''}\n`;    summary += `  Children Count: ${formData.familyInformation.childrenCount || ''}\n`;    summary += `  Family in US: ${formData.familyInformation.familyInUS || ''}\n`;    summary += `  Emergency Contact: ${formData.familyInformation.emergencyContact || ''}\n`;  }  if (formData.legalHistory) {    summary += `\nLegal History:\n`;    summary += `  Criminal Record: ${formData.legalHistory.criminalRecord ? 'Yes' : 'No'}\n`;    summary += `  Immigration Violations: ${formData.legalHistory.immigrationViolations ? 'Yes' : 'No'}\n`;    summary += `  Deportation History: ${formData.legalHistory.deportationHistory ? 'Yes' : 'No'}\n`;    summary += `  Pending Cases: ${formData.legalHistory.pendingCases ? 'Yes' : 'No'}\n`;  }  if (formData.previousApplications) {    summary += `\nPrevious Applications:\n`;    summary += `  Prior Visa Applications: ${formData.previousApplications.priorVisaApplications ? 'Yes' : 'No'}\n`;    summary += `  Refusal History: ${formData.previousApplications.refusalHistory ? 'Yes' : 'No'}\n`;    summary += `  Application Numbers: ${formData.previousApplications.applicationNumbers || ''}\n`;  }  if (formData.employmentEducation) {    summary += `\nEmployment/Education:\n`;    summary += `  Current Job: ${formData.employmentEducation.currentJob || ''}\n`;    summary += `  Education Level: ${formData.employmentEducation.educationLevel || ''}\n`;    summary += `  Skills: ${formData.employmentEducation.skills || ''}\n`;    summary += `  Income: ${formData.employmentEducation.income || ''}\n`;    summary += `  Work Authorization: ${formData.employmentEducation.workAuthorization ? 'Yes' : 'No'}\n`;  }  if (formData.reviewSubmit) {    summary += `\nReview & Submit:\n`;    summary += `  Data Review: ${formData.reviewSubmit.dataReview ? 'Accurate' : 'Not Accurate'}\n`;    summary += `  Digital Signature: ${formData.reviewSubmit.digitalSignature || ''}\n`;  }  return summary;};
 
 // @desc    Create new intake
 // @route   POST /api/intakes
@@ -84,23 +81,22 @@ const submitIntakeForm = asyncHandler(async (req, res) => {
 
   if (intake) {
     intake.formData = formData;
-    // Basic risk alert logic (example)
+    // Risk alert logic based on the new formData structure
     const riskAlerts = [];
-    if (formData.hasPreviousVisa === 'Yes' && formData.visaDenialReason) {
-      riskAlerts.push(`Previous visa denial: ${formData.visaDenialReason}`);
+    if (formData.legalHistory?.criminalRecord === true) {
+      riskAlerts.push(`Criminal record detected.`);
     }
-    if (formData.hasCriminalRecord === 'Yes' && formData.criminalRecordDetails) {
-      riskAlerts.push(`Criminal record: ${formData.criminalRecordDetails}`);
+    if (formData.legalHistory?.immigrationViolations === true) {
+      riskAlerts.push(`Immigration violations detected.`);
     }
-    if (formData.hasPreviousVisaDenial === 'Yes' && formData.visaDenialReason) {
-      riskAlerts.push(`Previous visa denial: ${formData.visaDenialReason}`);
+    if (formData.legalHistory?.deportationHistory === true) {
+      riskAlerts.push(`Deportation history detected.`);
     }
-    if (formData.hasOverstayedVisa === 'Yes' && formData.overstayedVisaDetails) {
-      riskAlerts.push(`History of overstaying a visa: ${formData.overstayedVisaDetails}`);
+    if (formData.previousApplications?.refusalHistory === true) {
+      riskAlerts.push(`Previous visa refusal detected.`);
     }
-    // Add more risk rules here based on your requirements
     intake.riskAlerts = riskAlerts;
-    intake.status = 'In Progress'; // Or 'Completed' depending on form completion logic
+    intake.status = 'Completed'; // Mark as completed upon submission
 
     // Generate and save summary
     intake.summary = await generateSummary(formData);
@@ -123,9 +119,12 @@ const submitIntakeForm = asyncHandler(async (req, res) => {
     res.json(updatedIntake);
 
     // Send email to client
-    if (updatedIntake.formData.email) {
+    const clientEmail = updatedIntake.formData.personalInfo?.email;
+    const clientFullName = `${updatedIntake.formData.personalInfo?.firstName || ''} ${updatedIntake.formData.personalInfo?.lastName || ''}`.trim();
+
+    if (clientEmail) {
       const subject = `Your Intake Submission for ${updatedIntake.intakeType}`;
-      const text = `Dear ${updatedIntake.formData.fullName},
+      const text = `Dear ${clientFullName || 'client'},
 
 Thank you for submitting your intake form. Here is a summary of your submission:
 
@@ -135,13 +134,13 @@ We will review your information and get back to you shortly.
 
 Sincerely,
 Your Legal Team`;
-      const html = `<p>Dear ${updatedIntake.formData.fullName},</p>
+      const html = `<p>Dear ${clientFullName || 'client'},</p>
 <p>Thank you for submitting your intake form. Here is a summary of your submission:</p>
-<p>${updatedIntake.summary}</p>
+<pre>${updatedIntake.summary}</pre>
 <p>We will review your information and get back to you shortly.</p>
 <p>Sincerely,<br>Your Legal Team</p>`;
 
-      sendEmail(updatedIntake.formData.email, subject, updatedIntake.formData, updatedIntake.summary);
+      sendEmail(clientEmail, subject, text, html);
     }
   } else {
     res.status(404);

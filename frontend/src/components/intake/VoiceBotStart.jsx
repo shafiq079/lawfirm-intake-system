@@ -10,6 +10,7 @@ const VoiceBotStart = ({ onAutoFill, nextStep, prevStep, intakeLink }) => {
   const [conversationHistory, setConversationHistory] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [preferredLanguage, setPreferredLanguage] = useState('en'); // 'en' or 'es'
+  const [formData, setFormData] = useState({}); // Local state to simulate form data for getNextQuestion
 
   useEffect(() => {
     // Initial greeting and language selection
@@ -102,6 +103,35 @@ const VoiceBotStart = ({ onAutoFill, nextStep, prevStep, intakeLink }) => {
       toast.success("Recording stopped. Processing...");
     }
   };
+const handleSkipQuestion = async () => {
+  try {
+    const response = await axios.post('/api/voice/guided-intake', {
+      intakeLink,
+      currentQuestionIndex: currentQuestionIndex + 1,
+      preferredLanguage,
+      skipped: true, // Optional flag you can send
+    });
+
+    const { action, question, index, updatedFormData } = response.data;
+
+    if (updatedFormData) {
+      onAutoFill(updatedFormData);
+    }
+
+    if (action === 'ask_question') {
+      setCurrentQuestion(question);
+      setCurrentQuestionIndex(index);
+      setConversationHistory(prev => [...prev, { speaker: 'bot', text: question }]);
+    } else if (action === 'complete_intake') {
+      toast.success("Intake completed.");
+      nextStep();
+    }
+
+  } catch (err) {
+    toast.error("Failed to skip question. Please try again.");
+    console.error(err);
+  }
+};
 
   return (
     <div className="space-y-4 text-center">
@@ -127,6 +157,14 @@ const VoiceBotStart = ({ onAutoFill, nextStep, prevStep, intakeLink }) => {
         >
           {isRecording ? 'Stop Recording' : 'Start Recording'}
         </button>
+        <button
+  type="button"
+  onClick={handleSkipQuestion}
+  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+>
+  Skip Question
+</button>
+
       </div>
 
       <p className="text-sm text-gray-500 mt-4">

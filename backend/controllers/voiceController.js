@@ -228,12 +228,35 @@ const Intake = require('../models/intakeModel');
 const { getNextQuestion, analyzeSpeechWithGemini, formQuestions } = require('../utils/voiceBotLogic');
 
 const handleGuidedVoiceIntake = asyncHandler(async (req, res) => {
-  const { intakeLink, currentQuestionIndex, preferredLanguage } = req.body;
+  const { intakeLink, currentQuestionIndex, preferredLanguage, skipped } = req.body;
   const file = req.file; // Audio file from frontend
 
-  if (!file) {
-    return res.status(400).json({ message: 'No audio file provided.' });
+if (!file && skipped) {
+  let intake = await Intake.findOne({ intakeLink });
+  if (!intake) {
+    return res.status(404).json({ message: 'Intake not found.' });
   }
+
+  const nextQuestion = getNextQuestion(intake.formData, parseInt(currentQuestionIndex, 10) + 1);
+
+  if (nextQuestion) {
+    return res.json({
+      action: 'ask_question',
+      question: nextQuestion.question,
+      field: nextQuestion.field,
+      index: nextQuestion.index,
+      type: nextQuestion.type,
+      options: nextQuestion.options,
+      updatedFormData: intake.formData,
+    });
+  } else {
+    intake.status = 'Completed';
+    await intake.save();
+    return res.json({ action: 'complete_intake', updatedFormData: intake.formData });
+  }
+}
+
+
 
   let intake = await Intake.findOne({ intakeLink });
 

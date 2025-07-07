@@ -49,7 +49,11 @@ const ClientIntakeScreen = () => {
   const renderInitialChoices = () => (
     <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-8">
       <button
-        onClick={() => setShowVoiceRecorder(true)}
+        const handleStartVoiceIntake = () => {
+    setIsVoiceIntakeActive(true);
+    setShowTextForm(true); // The voice bot will fill this form
+    console.log('isVoiceIntakeActive set to:', true);
+  };
         className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
       >
         Start Voice Intake
@@ -74,20 +78,19 @@ const ClientIntakeScreen = () => {
       <h1 className="text-3xl font-bold mb-6">Welcome to Your Intake</h1>
       <p className="text-lg mb-8">Please choose your preferred intake method for: <span className="font-semibold">{selectedIntake.intakeType}</span></p>
 
-      {!showTextForm && !showDocumentUpload && !showVoiceRecorder && renderInitialChoices()}
+      {!showTextForm && !showDocumentUpload && !isVoiceIntakeActive && renderInitialChoices()}
 
-      {showVoiceRecorder && (
-        <>
-          <p className="text-lg text-gray-600 mb-8 text-center">
-            Please state your full name, email address, phone number, and the type of immigration case you are interested in.
-            For example: "Hello, my name is John Smith, and I'd like to apply for a spouse visa. You can reach me at john.smith@email.com or 555-123-4567."
-          </p>
-          <VoiceRecorder onRecordingComplete={handleRecordingComplete} />
-        </>
-      )}
-
-      {showTextForm && (
-        <ClientTextIntakeScreen initialData={processedVoiceData} />
+      {(showTextForm || isVoiceIntakeActive) && (
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <ClientTextIntakeScreen initialData={processedVoiceData} />
+          </div>
+          {isVoiceIntakeActive && (
+            <div className="flex-1">
+              <VoiceBotPanel />
+            </div>
+          )}
+        </div>
       )}
 
       {showDocumentUpload && (

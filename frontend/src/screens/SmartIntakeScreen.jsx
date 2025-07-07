@@ -12,75 +12,73 @@ import VoiceBotStart from '../components/intake/VoiceBotStart';
 import InputMethodSelector from '../components/intake/InputMethodSelector';
 
 const SmartIntakeScreen = () => {
-  const { intakeLink } = useParams(); // For public access via intakeLink
+  const { intakeLink } = useParams();
+
   const [inputMethod, setInputMethod] = useState(() => {
-    // If accessed via a public intake link, always show selection UI first
-    if (intakeLink) {
-      return null;
-    }
-    // Otherwise, try to load from localStorage
+    if (intakeLink) return null;
     return localStorage.getItem('inputMethod');
   });
-  const [formData, setFormData] = useState(() => {
-    const savedData = localStorage.getItem('intakeFormData');
-    return savedData ? JSON.parse(savedData) : {};
-  });
-  const [currentStep, setCurrentStep] = useState(1); // Start with PersonalInfoStep for manual
 
-  // Load saved data from localStorage on component mount
+  const [formData, setFormData] = useState(() => {
+    const saved = localStorage.getItem('intakeFormData');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  const [currentStep, setCurrentStep] = useState(1);
+
   useEffect(() => {
     const savedData = localStorage.getItem('intakeFormData');
-    if (savedData) {
-      setFormData(JSON.parse(savedData));
-    }
-    const savedMethod = localStorage.getItem('inputMethod');
-    if (savedMethod) {
-      setInputMethod(savedMethod);
-    }
     const savedStep = localStorage.getItem('currentStep');
-    if (savedStep) {
-      setCurrentStep(parseInt(savedStep, 10));
-    }
+    const savedMethod = localStorage.getItem('inputMethod');
+
+    if (savedData) setFormData(JSON.parse(savedData));
+    if (savedStep) setCurrentStep(parseInt(savedStep, 10));
+    if (savedMethod) setInputMethod(savedMethod);
   }, []);
 
-  // Save data to localStorage whenever formData or currentStep changes
   useEffect(() => {
     localStorage.setItem('intakeFormData', JSON.stringify(formData));
     localStorage.setItem('currentStep', currentStep.toString());
-    if (inputMethod) {
-      localStorage.setItem('inputMethod', inputMethod);
-    }
+    if (inputMethod) localStorage.setItem('inputMethod', inputMethod);
   }, [formData, currentStep, inputMethod]);
 
   const updateFormData = useCallback((newData) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      ...newData,
-    }));
+    setFormData((prev) => ({ ...prev, ...newData }));
   }, []);
 
   const handleAutoFill = useCallback((extractedData) => {
     updateFormData(extractedData);
-    setCurrentStep(1); // Move to the first form step after autofill
+    setCurrentStep(1);
   }, [updateFormData]);
 
   const handleMethodSelection = (method) => {
     setInputMethod(method);
-    // Clear previous data if a new method is selected
     localStorage.removeItem('intakeFormData');
     localStorage.removeItem('currentStep');
     localStorage.setItem('inputMethod', method);
     setFormData({});
-    setCurrentStep(method === 'manual' ? 1 : 0); // 0 for initial voice/document step, 1 for manual form start
+    setCurrentStep(method === 'manual' ? 1 : 0);
   };
 
   const nextStep = useCallback(() => {
-    setCurrentStep((prevStep) => prevStep + 1);
+    setCurrentStep((prev) => prev + 1);
   }, []);
 
   const prevStep = useCallback(() => {
-    setCurrentStep((prevStep) => prevStep - 1);
+    setCurrentStep((prev) => prev - 1);
   }, []);
+
+  const getSectionNameByStep = (step) => {
+    switch (step) {
+      case 1: return 'personal';
+      case 2: return 'immigration';
+      case 3: return 'passport';
+      case 4: return 'employment';
+      case 5: return 'family';
+      case 6: return 'legal';
+      default: return '';
+    }
+  };
 
   const renderStep = () => {
     switch (currentStep) {
@@ -88,9 +86,13 @@ const SmartIntakeScreen = () => {
         if (inputMethod === 'document') {
           return <DocumentUpload onAutoFill={handleAutoFill} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} />;
         } else if (inputMethod === 'voice') {
-          return <VoiceBotStart onAutoFill={handleAutoFill} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} />;
+          return (
+            <div className="w-full">
+              <VoiceBotStart onAutoFill={handleAutoFill} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} />
+            </div>
+          );
         }
-        return null; // Should not happen if inputMethod is set
+        return null;
       case 1:
         return <PersonalInfoStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} />;
       case 2:
@@ -117,13 +119,13 @@ const SmartIntakeScreen = () => {
       localStorage.removeItem('currentStep');
       localStorage.removeItem('inputMethod');
       setFormData({});
-      setCurrentStep(1); // Reset to initial step for manual form
+      setCurrentStep(1);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-3xl">
+      <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-6xl flex flex-col">
         {!inputMethod ? (
           <InputMethodSelector onSelect={handleMethodSelection} />
         ) : (
@@ -136,8 +138,9 @@ const SmartIntakeScreen = () => {
                 Change Input Method
               </button>
             </div>
+
             <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Smart Intake Form</h1>
-            {/* Progress Indicator - You might want to refine this based on actual steps */}
+
             <div className="flex justify-between mb-6">
               {inputMethod === 'manual' && [
                 { id: 1, name: 'Personal Info' },
@@ -158,7 +161,20 @@ const SmartIntakeScreen = () => {
                 </div>
               ))}
             </div>
-            {renderStep()}
+
+            <div className="flex gap-6">
+              <div className="flex-1">{renderStep()}</div>
+
+              {inputMethod === 'voice' && currentStep > 0 && (
+                <div className="w-[300px]">
+                  <VoiceBotStart
+                    sectionName={getSectionNameByStep(currentStep)}
+                    intakeLink={intakeLink}
+                    onAutoFill={updateFormData}
+                  />
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>
