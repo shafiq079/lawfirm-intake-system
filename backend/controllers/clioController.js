@@ -78,7 +78,7 @@ const makeClioApiCall = async (url, method, body, userId, refreshToken, currentA
       },
     };
 
-    if (method === 'POST') {
+    if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
       options.headers['Content-Type'] = 'application/json';
     }
 
@@ -124,41 +124,39 @@ const syncIntakeToClio = async (intake, token, user, resync = false) => {
   let currentUser = user;
 
   try {
-    // Get the latest user data to ensure we have the most current refresh token
     currentUser = await User.findById(currentUser._id);
     if (!currentUser || !currentUser.clioRefreshToken) {
       throw new Error('User not found or missing Clio refresh token');
     }
 
-    // Prevent duplicate syncs unless resync is explicitly requested
     if (intake.clioSyncStatus === 'Synced' && !resync) {
       return { success: false, message: 'Intake already synced to Clio. Use resync option to force.' };
     }
 
-    // 1. Prepare Contact Data
+    if (!intake.fullName || !intake.email) {
+        console.error('Sync failed: Intake form is incomplete. Full name and email are required.');
+        return { success: false, message: 'Cannot sync an incomplete intake. Please ensure the form is filled out and submitted.' };
+    }
+
+    const [firstName, ...lastNameParts] = (intake.fullName || '').split(' ');
+    const lastName = lastNameParts.join(' ');
+
     const contactData = {
       type: 'Person',
-      first_name: intake.formData.firstName || '',
-      last_name: intake.formData.lastName || '',
-      email_addresses: intake.formData.emailAddress ? [{ address: intake.formData.emailAddress, default: true }] : [],
-      phone_numbers: intake.formData.phoneNumber ? [{ number: intake.formData.phoneNumber, default: true }] : [],
-      date_of_birth: intake.formData.dateOfBirth || undefined,
-      // Add custom fields for other relevant personal info if Clio supports them
-      // For example, if you have a custom field for 'Country of Citizenship' in Clio
-      // custom_fields: {
-      //   'Country of Citizenship': intake.formData.countryOfCitizenship,
-      // },
+      first_name: firstName,
+      last_name: lastName,
+      email_addresses: intake.email ? [{ address: intake.email, default: true }] : [],
+      phone_numbers: intake.phoneNumber ? [{ number: intake.phoneNumber, default: true }] : [],
+      date_of_birth: intake.dateOfBirth || undefined,
     };
 
     let contactId = null;
-    let contactSearchResponse;
     let contactSearchData = null;
 
-    // Search for existing contact by email
-    if (intake.formData.emailAddress) {
+    if (intake.email) {
       try {
-        contactSearchResponse = await makeClioApiCall(
-          `https://eu.app.clio.com/api/v4/contacts.json?query=${encodeURIComponent(intake.formData.emailAddress)}`,
+        const contactSearchResponse = await makeClioApiCall(
+          `https://eu.app.clio.com/api/v4/contacts.json?query=${encodeURIComponent(intake.email)}`,
           'GET',
           null,
           currentUser._id,
@@ -173,12 +171,11 @@ const syncIntakeToClio = async (intake, token, user, resync = false) => {
     }
 
     if (contactSearchData && contactSearchData.data?.length > 0) {
-      // Contact found, update it
       contactId = contactSearchData.data[0].id;
       console.log(`Updating existing Clio contact with ID: ${contactId}`);
       const updateContactResponse = await makeClioApiCall(
         `https://eu.app.clio.com/api/v4/contacts/${contactId}.json`,
-        'PUT', // Use PUT for updating an existing resource
+        'PUT',
         { data: contactData },
         currentUser._id,
         currentUser.clioRefreshToken,
@@ -186,7 +183,6 @@ const syncIntakeToClio = async (intake, token, user, resync = false) => {
       );
       currentToken = updateContactResponse.accessToken;
     } else {
-      // Contact not found, create new
       console.log('Creating new Clio contact.');
       const createContactResponse = await makeClioApiCall(
         'https://eu.app.clio.com/api/v4/contacts.json',
@@ -197,8 +193,8 @@ const syncIntakeToClio = async (intake, token, user, resync = false) => {
         currentToken
       );
       currentToken = createContactResponse.accessToken;
-      if (createContactResponse.data && createContactResponse.data.id) {
-        contactId = createContactResponse.data.id;
+      if (createContactResponse.data.data && createContactResponse.data.data.id) {
+        contactId = createContactResponse.data.data.id;
       } else {
         throw new Error('Failed to create contact: No valid contact ID returned from Clio API.');
       }
@@ -208,10 +204,9 @@ const syncIntakeToClio = async (intake, token, user, resync = false) => {
       throw new Error('Clio contact ID could not be obtained after search or creation.');
     }
 
-    // 2. Create Matter
-    const matterTitle = `${intake.formData.immigrationBenefit || 'Immigration Case'} for ${intake.formData.firstName || ''} ${intake.formData.lastName || ''}`;
-    const matterDescription = intake.formData.applicationReason || 'No specific reason provided.';
-    const matterType = intake.formData.immigrationBenefit || 'General Immigration'; // Map to Clio practice area if possible
+    const matterTitle = `${intake.visaType || 'Immigration Case'} for ${intake.fullName}`;
+    const matterDescription = intake.immigrationGoal || 'No specific goal provided.';
+    const matterType = intake.visaType || 'General Immigration';
 
     const matterResponse = await makeClioApiCall(
       'https://eu.app.clio.com/api/v4/matters.json',
@@ -222,8 +217,8 @@ const syncIntakeToClio = async (intake, token, user, resync = false) => {
           status: 'open',
           description: matterDescription,
           name: matterTitle,
-          open_date: new Date().toISOString().split('T')[0], // Current date
-          practice_area: { name: matterType }, // This might need to be an ID if Clio has strict practice area definitions
+          open_date: new Date().toISOString().split('T')[0],
+          practice_area: { name: matterType },
         },
       },
       currentUser._id,
@@ -231,27 +226,23 @@ const syncIntakeToClio = async (intake, token, user, resync = false) => {
       currentToken
     );
     currentToken = matterResponse.accessToken;
-    if (!matterResponse.data) throw new Error('Failed to create matter');
-    const matter = matterResponse.data;
+    if (!matterResponse.data.data) throw new Error('Failed to create matter');
+    const matter = matterResponse.data.data;
 
-    // 3. Create Note
-    let noteContent = `Intake Data Summary:\n`;
-    noteContent += `Submission Method: ${intake.intakeType || 'N/A'}\n`;
-    noteContent += `Application Reason: ${intake.formData.applicationReason || 'N/A'}\n`;
-    if (intake.riskAlerts && intake.riskAlerts.length > 0) {
-      noteContent += `Risk Alerts: ${intake.riskAlerts.join(', ')}\n`;
-    }
-    noteContent += `\nFull Intake Form Data:\n${JSON.stringify(intake.formData, null, 2)}`;
+    const noteSubject = `Intake Submission: ${intake.fullName}`;
+    const noteDetail = `Full Intake Data:\n\n${JSON.stringify(intake.toObject(), null, 2)}`;
 
     const noteResponse = await makeClioApiCall(
       'https://eu.app.clio.com/api/v4/notes.json',
       'POST',
       {
         data: {
-          content: noteContent,
-          matter: {
-            id: matter.id,
-          },
+          type: 'Matter', // As per documentation
+          subject: noteSubject,
+          detail: noteDetail,
+          date: new Date().toISOString().split('T')[0], // Required date field
+          contact: { id: contactId }, // Associate contact with the note
+          matter: { id: matter.id },
         },
       },
       currentUser._id,
@@ -260,18 +251,6 @@ const syncIntakeToClio = async (intake, token, user, resync = false) => {
     );
     currentToken = noteResponse.accessToken;
 
-    // 4. Handle Document Uploads (Simulated for now)
-    if (intake.formData.uploadedDocuments && intake.formData.uploadedDocuments.length > 0) {
-      console.log(`Simulating upload of ${intake.formData.uploadedDocuments.length} documents to Clio for matter ID: ${matter.id}`);
-      for (const doc of intake.formData.uploadedDocuments) {
-        console.log(`  - Document: ${doc.name} (Type: ${doc.type}, Size: ${doc.size} bytes) would be uploaded here.`);
-        // In a real implementation, you would retrieve the actual file from temporary storage
-        // and then call a function like uploadDocumentToClio with the file buffer and metadata.
-        // Example: await uploadDocumentToClioHelper(fileBuffer, doc.name, doc.type, matter.id, currentUser._id, currentUser.clioRefreshToken, currentToken);
-      }
-    }
-
-    // 5. Update Intake Model with sync status and Clio Matter ID
     intake.clioSyncStatus = 'Synced';
     intake.clioMatterId = matter.id;
     await intake.save();
@@ -280,6 +259,8 @@ const syncIntakeToClio = async (intake, token, user, resync = false) => {
 
   } catch (err) {
     console.error('Clio sync error:', err);
+    intake.clioSyncStatus = 'Failed';
+    await intake.save();
     return { success: false, message: err.message };
   }
 };

@@ -106,9 +106,9 @@ const SmartIntakeScreen = () => {
       case 6:
         return <LegalHistoryStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} />;
       case 7:
-        return <ReviewSubmitStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} />;
+        return <ReviewSubmitStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} />;
       default:
-        return <ReviewSubmitStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} />;
+        return <ReviewSubmitStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} />;
     }
   };
 

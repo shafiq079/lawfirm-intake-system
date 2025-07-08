@@ -75,70 +75,63 @@ const getIntakeById = asyncHandler(async (req, res) => {
 // @route   POST /api/intakes/submit
 // @access  Public
 const submitIntakeForm = asyncHandler(async (req, res) => {
-  const { intakeLink, formData } = req.body;
+  console.log('--- Received Intake Submission ---');
+  console.log('Request Body:', JSON.stringify(req.body, null, 2));
+
+  const { intakeLink, ...formData } = req.body;
+  console.log('Extracted formData:', JSON.stringify(formData, null, 2));
 
   const intake = await Intake.findOne({ intakeLink });
 
   if (intake) {
-    intake.formData = formData;
-    // Risk alert logic based on the new formData structure
+    console.log('Found intake to update:', intake._id);
+
+    // Combine names and map email
+    formData.fullName = [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(' ');
+    formData.email = formData.emailAddress;
+
+    // Directly update the intake document with the form data
+    Object.assign(intake, formData);
+
+    // Risk alert logic
     const riskAlerts = [];
-    if (formData.legalHistory?.criminalRecord === true) {
+    if (formData.hasCriminalRecord) {
       riskAlerts.push(`Criminal record detected.`);
     }
-    if (formData.legalHistory?.immigrationViolations === true) {
-      riskAlerts.push(`Immigration violations detected.`);
-    }
-    if (formData.legalHistory?.deportationHistory === true) {
-      riskAlerts.push(`Deportation history detected.`);
-    }
-    if (formData.previousApplications?.refusalHistory === true) {
-      riskAlerts.push(`Previous visa refusal detected.`);
+    if (formData.hasPreviousImmigrationApps) {
+      riskAlerts.push(`Previous immigration applications detected.`);
     }
     intake.riskAlerts = riskAlerts;
-    intake.status = 'Completed'; // Mark as completed upon submission
-
-    // Generate and save summary
-    intake.summary = await generateSummary(formData);
+    intake.status = 'Completed';
 
     const updatedIntake = await intake.save();
-
-    // Attempt to sync to Clio
-    let user = await User.findById(intake.user); // Re-fetch user to ensure latest tokens
-    if (user && user.clioAccessToken) {
-      try {
-        await syncIntakeToClio(updatedIntake, user.clioAccessToken, user);
-      } catch (error) {
-        console.error('Clio sync failed:', error);
-        // Optional: Update intake status to indicate sync failure
-        intake.status = 'Sync Failed';
-        await intake.save();
-      }
-    }
 
     res.json(updatedIntake);
 
     // Send email to client
-    const clientEmail = updatedIntake.formData.personalInfo?.email;
-    const clientFullName = `${updatedIntake.formData.personalInfo?.firstName || ''} ${updatedIntake.formData.personalInfo?.lastName || ''}`.trim();
+    const clientEmail = updatedIntake.email;
+    const clientFullName = updatedIntake.fullName;
 
     if (clientEmail) {
       const subject = `Your Intake Submission for ${updatedIntake.intakeType}`;
+      // Construct a summary from the structured data for the email
+      const summary = `
+        Full Name: ${clientFullName || 'N/A'}
+        Date of Birth: ${updatedIntake.dateOfBirth || 'N/A'}
+        Immigration Goal: ${updatedIntake.immigrationGoal || 'N/A'}
+        Visa Type: ${updatedIntake.visaType || 'N/A'}
+      `.trim();
       const text = `Dear ${clientFullName || 'client'},
 
 Thank you for submitting your intake form. Here is a summary of your submission:
 
-${updatedIntake.summary}
+${summary}
 
 We will review your information and get back to you shortly.
 
 Sincerely,
 Your Legal Team`;
-      const html = `<p>Dear ${clientFullName || 'client'},</p>
-<p>Thank you for submitting your intake form. Here is a summary of your submission:</p>
-<pre>${updatedIntake.summary}</pre>
-<p>We will review your information and get back to you shortly.</p>
-<p>Sincerely,<br>Your Legal Team</p>`;
+      const html = `<p>Dear ${clientFullName || 'client'},</p><p>Thank you for submitting your intake form. Here is a summary of your submission:</p><pre>${summary}</pre><p>We will review your information and get back to you shortly.</p><p>Sincerely,<br>Your Legal Team</p>`;
 
       sendEmail(clientEmail, subject, text, html);
     }

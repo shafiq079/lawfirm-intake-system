@@ -83,6 +83,24 @@ export const getIntakeByLink = createAsyncThunk(
   }
 );
 
+
+export const submitIntake = createAsyncThunk(
+  'intake/submit',
+  async (intakeData, { rejectWithValue }) => {
+    try {
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+      const { data } = await axios.post('/api/intakes/submit', intakeData, config);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response.data.message || error.message);
+    }
+  }
+);
+
 const intakeSlice = createSlice({
   name: 'intake',
   initialState,
@@ -136,14 +154,27 @@ const intakeSlice = createSlice({
       })
       .addCase(getIntakeByLink.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedIntake = action.payload;
+        state.selectedInt.selectedIntake = action.payload;
       })
       .addCase(getIntakeByLink.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(submitIntake.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(submitIntake.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.selectedIntake = action.payload;
+      })
+      .addCase(submitIntake.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
   },
 });
+
 
 export const { resetSuccess, clearIntakeDetails } = intakeSlice.actions;
 
