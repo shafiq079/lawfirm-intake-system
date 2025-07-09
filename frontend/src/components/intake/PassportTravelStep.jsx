@@ -11,74 +11,74 @@ const PassportTravelStep = ({ formData, updateFormData, nextStep, prevStep }) =>
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">Step 3: Passport & Travel Info</h2>
+    <form onSubmit={handleSubmit} className="space-y-4 p-6 bg-color-secondary rounded-lg shadow-lg transition-colors duration-300 ease-in-out">
+      <h2 className="text-xl font-bold text-color-text mb-4 border-b pb-2 border-color-border">Step 3: Passport & Travel Info</h2>
       <div>
-        <label htmlFor="passportNumber" className="block text-sm font-medium text-gray-700">Passport Number</label>
+        <label htmlFor="passportNumber" className="block text-sm font-medium text-color-text">Passport Number</label>
         <input
           type="text"
           name="passportNumber"
           id="passportNumber"
           value={formData.passportNumber || ''}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="mt-1 block w-full px-4 py-2.5 rounded-md border-color-border shadow-sm focus:border-color-accent focus:ring-color-accent sm:text-sm bg-color-primary text-color-text transition-colors duration-300 ease-in-out"
           required
         />
       </div>
       <div>
-        <label htmlFor="passportCountryOfIssue" className="block text-sm font-medium text-gray-700">Country of Issue</label>
+        <label htmlFor="passportCountryOfIssue" className="block text-sm font-medium text-color-text">Country of Issue</label>
         <input
           type="text"
           name="passportCountryOfIssue"
           id="passportCountryOfIssue"
           value={formData.passportCountryOfIssue || ''}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="mt-1 block w-full px-4 py-2.5 rounded-md border-color-border shadow-sm focus:border-color-accent focus:ring-color-accent sm:text-sm bg-color-primary text-color-text transition-colors duration-300 ease-in-out"
           required
         />
       </div>
       <div>
-        <label htmlFor="passportExpiryDate" className="block text-sm font-medium text-gray-700">Passport Expiry Date</label>
+        <label htmlFor="passportExpiryDate" className="block text-sm font-medium text-color-text">Passport Expiry Date</label>
         <input
           type="date"
           name="passportExpiryDate"
           id="passportExpiryDate"
           value={formData.passportExpiryDate || ''}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="mt-1 block w-full px-4 py-2.5 rounded-md border-color-border shadow-sm focus:border-color-accent focus:ring-color-accent sm:text-sm bg-color-primary text-color-text transition-colors duration-300 ease-in-out"
           required
         />
       </div>
       <div>
-        <label htmlFor="i94Number" className="block text-sm font-medium text-gray-700">I-94 Number (if available)</label>
+        <label htmlFor="i94Number" className="block text-sm font-medium text-color-text">I-94 Number (if available)</label>
         <input
           type="text"
           name="i94Number"
           id="i94Number"
           value={formData.i94Number || ''}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="mt-1 block w-full px-4 py-2.5 rounded-md border-color-border shadow-sm focus:border-color-accent focus:ring-color-accent sm:text-sm bg-color-primary text-color-text transition-colors duration-300 ease-in-out"
         />
       </div>
       <div>
-        <label htmlFor="previousTravelHistory" className="block text-sm font-medium text-gray-700">Previous Travel History (free text or file upload option)</label>
+        <label htmlFor="previousTravelHistory" className="block text-sm font-medium text-color-text">Previous Travel History (free text or file upload option)</label>
         <textarea
           name="previousTravelHistory"
           id="previousTravelHistory"
           value={formData.previousTravelHistory || ''}
           onChange={handleChange}
           rows="3"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="mt-1 block w-full px-4 py-2.5 rounded-md border-color-border shadow-sm focus:border-color-accent focus:ring-color-accent sm:text-sm bg-color-primary text-color-text transition-colors duration-300 ease-in-out"
         ></textarea>
       </div>
       <div>
-        <label htmlFor="overstayedVisa" className="block text-sm font-medium text-gray-700">Have you ever overstayed a visa?</label>
+        <label htmlFor="overstayedVisa" className="block text-sm font-medium text-color-text">Have you ever overstayed a visa?</label>
         <select
           name="overstayedVisa"
           id="overstayedVisa"
           value={formData.overstayedVisa || ''}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="mt-1 block w-full px-4 py-2.5 rounded-md border-color-border shadow-sm focus:border-color-accent focus:ring-color-accent sm:text-sm bg-color-primary text-color-text transition-colors duration-300 ease-in-out"
           required
         >
           <option value="">Select...</option>
@@ -87,13 +87,13 @@ const PassportTravelStep = ({ formData, updateFormData, nextStep, prevStep }) =>
         </select>
       </div>
       <div>
-        <label htmlFor="deniedVisa" className="block text-sm font-medium text-gray-700">Have you ever been denied a visa?</label>
+        <label htmlFor="deniedVisa" className="block text-sm font-medium text-color-text">Have you ever been denied a visa?</label>
         <select
           name="deniedVisa"
           id="deniedVisa"
           value={formData.deniedVisa || ''}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="mt-1 block w-full px-4 py-2.5 rounded-md border-color-border shadow-sm focus:border-color-accent focus:ring-color-accent sm:text-sm bg-color-primary text-color-text transition-colors duration-300 ease-in-out"
           required
         >
           <option value="">Select...</option>
@@ -102,17 +102,17 @@ const PassportTravelStep = ({ formData, updateFormData, nextStep, prevStep }) =>
         </select>
       </div>
 
-      <div className="flex justify-between">
+      <div className="flex justify-between mt-6">
         <button
           type="button"
           onClick={prevStep}
-          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-color-text-secondary hover:bg-color-text-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-color-text-secondary"
         >
           Previous
         </button>
         <button
           type="submit"
-          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-color-accent hover:bg-color-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-color-accent"
         >
           Next
         </button>

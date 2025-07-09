@@ -264,6 +264,11 @@ if (!file && skipped) {
     return res.status(404).json({ message: 'Intake not found.' });
   }
 
+  // Ensure intake.formData is initialized
+  if (!intake.formData) {
+    intake.formData = {};
+  }
+
   let transcription; // Declare transcription here
 
   try {

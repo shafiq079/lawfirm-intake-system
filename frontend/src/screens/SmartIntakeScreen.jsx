@@ -132,10 +132,10 @@ const SmartIntakeScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center p-4">
+    <div className="min-h-screen flex justify-center p-4 transition-colors duration-300 ease-in-out">
       <div className="flex w-full max-w-7xl gap-6">
         {/* Main Form Content */}
-        <div className="flex-1 bg-white p-8 rounded-lg shadow-xl flex flex-col">
+        <div className="flex-1 w-3/4 bg-color-secondary p-8 rounded-lg flex flex-col transition-colors duration-300 ease-in-out">
           {!inputMethod ? (
             <InputMethodSelector onSelect={handleMethodSelection} />
           ) : (
@@ -144,14 +144,14 @@ const SmartIntakeScreen = () => {
               <div className="flex justify-end mb-4">
                 <button
                   onClick={handleChangeMethod}
-                  className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
+                  className="bg-color-text-secondary hover:bg-color-text-secondary font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out shadow-md"
                 >
                   Change Input Method
                 </button>
               </div>
               )}
 
-              <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Smart Intake Form</h1>
+              <h1 className="text-2xl font-bold text-center mb-6 text-color-text">Smart Intake Form</h1>
 
    
 
@@ -161,7 +161,7 @@ const SmartIntakeScreen = () => {
         </div>
 
         {/* Voice Bot Sidebar */}
-        <div className="w-[350px] bg-white p-4 rounded-lg shadow-xl flex flex-col">
+        <div className="w-1/4 bg-color-secondary h-screen rounded-lg shadow-xl flex flex-col transition-colors duration-300 ease-in-out">
           <VoiceBotStart
             sectionName={getSectionNameByStep(currentStep)}
             intakeLink={intakeLink}

@@ -18,7 +18,7 @@ function App() {
   return (
     <Router>
       <Header />
-      <main className="py-3">
+      <main className="main-content">
         <Routes>
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/register" element={<RegisterScreen />} />

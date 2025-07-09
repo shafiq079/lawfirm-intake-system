@@ -14,13 +14,13 @@ const ConversationHistory = () => {
   }, [conversation]);
 
   return (
-    <div className="h-64 overflow-y-auto border border-gray-300 rounded-md p-4 mb-4 bg-gray-50">
+    <div className="h-64 overflow-y-auto border border-color-border rounded-md p-4 mb-4 bg-color-primary shadow-inner transition-colors duration-300 ease-in-out">
       {conversation.map((entry, index) => (
-        <div key={index} className={`mb-2 ${entry.sender === 'Bot' ? 'text-blue-800' : 'text-gray-800 text-right'}`}>
+        <div key={index} className={`mb-2 ${entry.sender === 'Bot' ? 'text-color-accent' : 'text-color-text text-right'}`}>
           <span className="font-semibold">{entry.sender}:</span>
           {entry.type === 'text' && entry.content}
           {entry.type === 'audio' && <span>[Audio Input]</span>}
-          {entry.type === 'error' && <span className="text-red-500">Error: {entry.content}</span>}
+          {entry.type === 'error' && <span className="text-color-error">Error: {entry.content}</span>}
         </div>
       ))}
       <div ref={messagesEndRef} />

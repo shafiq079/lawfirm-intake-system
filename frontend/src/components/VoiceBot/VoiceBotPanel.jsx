@@ -150,17 +150,17 @@ const VoiceBotPanel = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg border-2 border-red-500">
-      <h2 className="text-2xl font-semibold mb-4">Voice Assistant</h2>
+    <div className="bg-color-secondary p-6 rounded-lg shadow-lg border border-color-border transition-colors duration-300 ease-in-out">
+      <h2 className="text-2xl font-bold text-color-text mb-4 border-b pb-2 border-color-border">Voice Assistant</h2>
 
       <ConversationHistory />
 
-      <div className="mt-4 p-4 bg-blue-50 rounded-md">
-        <p className="text-lg font-medium">Bot: {currentQuestion || "Hello! How can I help you today?"}</p>
-        <p className="text-sm text-gray-600 mt-1">Progress: Question {currentQuestionIndex + 1} of {totalQuestionsInSection} in {currentSectionTitle}</p>
+      <div className="mt-4 p-4 bg-color-primary rounded-md shadow-sm border border-color-border">
+        <p className="text-lg font-medium text-color-text">Bot: {currentQuestion || "Hello! How can I help you today?"}</p>
+        <p className="text-sm text-color-text-secondary mt-1">Progress: Question {currentQuestionIndex + 1} of {totalQuestionsInSection} in {currentSectionTitle}</p>
       </div>
 
-      {errors.length > 0 && <p className="text-red-500 mt-2">Error: {errors[errors.length - 1]}</p>}
+      {errors.length > 0 && <p className="text-color-error mt-2">Error: {errors[errors.length - 1]}</p>}
 
       <AudioRecorder onStartRecording={handleStartRecording} onStopRecording={handleStopRecording} />
 

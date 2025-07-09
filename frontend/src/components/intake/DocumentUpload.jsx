@@ -103,10 +103,10 @@ const DocumentUpload = ({ onAutoFill, nextStep, prevStep, intakeLink, formData, 
 
   const getButtonClass = (docType) => {
     const status = uploadedDocuments[docType]?.status;
-    if (status === 'uploaded') return 'bg-green-500 hover:bg-green-600';
-    if (status === 'uploading') return 'bg-yellow-500 cursor-not-allowed';
-    if (status === 'error') return 'bg-red-500 hover:bg-red-600';
-    return 'bg-blue-600 hover:bg-blue-700';
+    if (status === 'uploaded') return 'bg-color-success hover:bg-color-success';
+    if (status === 'uploading') return 'bg-color-warning cursor-not-allowed';
+    if (status === 'error') return 'bg-color-error hover:bg-color-error';
+    return 'bg-color-accent hover:bg-color-accent';
   };
 
   const getButtonText = (docType) => {
@@ -118,27 +118,27 @@ const DocumentUpload = ({ onAutoFill, nextStep, prevStep, intakeLink, formData, 
   };
 
   return (
-    <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">Step 7: Document Upload</h2>
-      <p className="text-gray-600">Based on your provided information, please upload the required documents:</p>
+    <form onSubmit={(e) => e.preventDefault()} className="space-y-4 p-6 bg-color-secondary rounded-lg shadow-lg transition-colors duration-300 ease-in-out">
+      <h2 className="text-xl font-bold text-color-text mb-4 border-b pb-2 border-color-border">Step 7: Document Upload</h2>
+      <p className="text-color-text-secondary">Based on your provided information, please upload the required documents:</p>
 
       {loading ? (
-        <p>Loading required documents...</p>
+        <p className="text-color-text-secondary">Loading required documents...</p>
       ) : requiredDocuments.length > 0 ? (
         <div className="space-y-4">
           {requiredDocuments.map((docType) => (
-            <div key={docType} className="flex flex-col md:flex-row items-start md:items-center justify-between border p-3 rounded-md">
-              <label className="block text-sm font-medium text-gray-700 mb-2 md:mb-0 md:w-1/3">{docType}</label>
+            <div key={docType} className="flex flex-col md:flex-row items-start md:items-center justify-between border border-color-border p-3 rounded-md bg-color-primary shadow-sm transition-colors duration-300 ease-in-out">
+              <label className="block text-sm font-medium text-color-text mb-2 md:mb-0 md:w-1/3">{docType}</label>
               <div className="flex flex-col md:flex-row items-start md:items-center md:w-2/3 space-y-2 md:space-y-0 md:space-x-2">
                 <input
                   type="file"
                   onChange={(e) => handleFileSelect(docType, e.target.files[0])}
-                  className="block w-full text-sm text-gray-500
+                  className="block w-full text-sm text-color-text-secondary
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-full file:border-0
                     file:text-sm file:font-semibold
-                    file:bg-blue-50 file:text-blue-700
-                    hover:file:bg-blue-100"
+                    file:bg-color-accent file:text-white
+                    hover:file:bg-color-accent transition-all duration-300 ease-in-out"
                 />
                 <button
                   type="button"
@@ -149,10 +149,10 @@ const DocumentUpload = ({ onAutoFill, nextStep, prevStep, intakeLink, formData, 
                   {getButtonText(docType)}
                 </button>
                 {uploadedDocuments[docType]?.status === 'uploaded' && (
-                  <span className="text-xs text-green-600 ml-2"></span>
+                  <span className="text-xs text-color-success ml-2">Uploaded!</span>
                 )}
                 {uploadedDocuments[docType]?.status === 'error' && (
-                  <span className="text-xs text-red-600 ml-2">Upload failed.</span>
+                  <span className="text-xs text-color-error ml-2">Upload failed.</span>
                 )}
               </div>
             </div>
@@ -166,7 +166,7 @@ const DocumentUpload = ({ onAutoFill, nextStep, prevStep, intakeLink, formData, 
         <button
           type="button"
           onClick={prevStep}
-          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-color-text-secondary hover:bg-color-text-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-color-text-secondary"
         >
           Previous
         </button>
@@ -174,7 +174,7 @@ const DocumentUpload = ({ onAutoFill, nextStep, prevStep, intakeLink, formData, 
           type="button"
           onClick={handleNext}
           disabled={requiredDocuments.some(docType => uploadedDocuments[docType]?.status !== 'uploaded') || uploadingDocType !== null} // Disable if any required doc not uploaded or any doc is uploading
-          className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${requiredDocuments.some(docType => uploadedDocuments[docType]?.status !== 'uploaded') || uploadingDocType !== null ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+          className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${requiredDocuments.some(docType => uploadedDocuments[docType]?.status !== 'uploaded') || uploadingDocType !== null ? 'bg-color-border text-color-text-secondary cursor-not-allowed' : 'bg-color-accent hover:bg-color-accent'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-color-accent`}
         >
           Next
         </button>

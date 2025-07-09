@@ -85,22 +85,22 @@ const AdminDashboardScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Admin Dashboard</h1>
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-300 ease-in-out">
+      <div className="max-w-7xl mx-auto bg-color-secondary p-6 rounded-lg shadow-lg transition-colors duration-300 ease-in-out">
+        <h1 className="text-3xl font-bold text-color-text mb-6">Admin Dashboard</h1>
 
         {/* Action Buttons and Phone Input */}
         <div className="flex flex-col sm:flex-row items-center justify-between mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
           <div className="flex space-x-4">
             <Link
               to="/admin/intakes/create"
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
+              className="bg-color-success hover:bg-color-success font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out shadow-md"
             >
               Create New Intake
             </Link>
             <button
               onClick={handleConnectClio}
-              className={`font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out ${clioConnected ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+              className={`font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out shadow-md ${clioConnected ? 'bg-color-border text-color-text-secondary cursor-not-allowed' : 'bg-color-accent hover:bg-color-accent text-white'}`}
               disabled={clioConnected}
             >
               {clioConnected ? 'Connected to Clio' : 'Connect to Clio'}
@@ -111,97 +111,97 @@ const AdminDashboardScreen = () => {
             placeholder="Client Phone Number (e.g., +1234567890)"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
-            className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full sm:w-auto px-4 py-2 border border-color-border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-color-accent focus:border-transparent bg-color-primary text-color-text transition-colors duration-300 ease-in-out"
           />
         </div>
 
         {/* Loading, Error, and No Intakes States */}
         {loading ? (
-          <div className="text-center py-8 text-gray-600">Loading intakes...</div>
+          <div className="text-center py-8 text-color-text-secondary">Loading intakes...</div>
         ) : error ? (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <div className="bg-color-error border border-color-error text-white px-4 py-3 rounded relative mb-4 shadow-md" role="alert">
             <strong className="font-bold">Error:</strong>
             <span className="block sm:inline"> {error}</span>
           </div>
         ) : intakes && intakes.length > 0 ? (
-          <div className="overflow-x-auto bg-white rounded-lg shadow">
+          <div className="overflow-x-auto bg-color-secondary rounded-lg transition-colors duration-300 ease-in-out">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-color-primary">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-color-text-secondary uppercase tracking-wider">
                     ID
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-color-text-secondary uppercase tracking-wider">
                     Type
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-color-text-secondary uppercase tracking-wider">
                     Status
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-color-text-secondary uppercase tracking-wider">
                     Actions
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-color-text-secondary uppercase tracking-wider">
                     Risk Alerts
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-color-text-secondary uppercase tracking-wider">
                     Summary
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-color-text-secondary uppercase tracking-wider">
                     Created At
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-color-border">
                 {intakes.map((intake) => (
-                  <tr key={intake._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      <Link to={`/admin/intakes/${intake._id}`} className="text-blue-600 hover:text-blue-900">
+                  <tr key={intake._id} className="bg-color-secondary hover:bg-color-primary transition-colors duration-300 ease-in-out">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-color-text">
+                      <Link to={`/admin/intakes/${intake._id}`} className="text-color-accent hover:text-color-accent">
                         {intake._id}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{intake.intakeType}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{intake.status}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-color-text-secondary">{intake.intakeType}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-color-text-secondary">{intake.status}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <a
                         href={`/intake/${intake.intakeLink}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+                        className="text-color-accent hover:text-color-accent mr-3"
                       >
                         View Intake
                       </a>
                       <button
                         onClick={() => handleInitiateCall(intake.intakeLink)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white text-xs py-1 px-2 rounded-md mr-3"
+                        className="bg-color-accent hover:bg-color-accent text-xs py-1 px-2 rounded-md mr-3 shadow-sm"
                       >
                         Call
                       </button>
                       <button
                         onClick={() => handleSyncToClio(intake.intakeLink)}
-                        className="bg-teal-600 hover:bg-teal-700 text-white text-xs py-1 px-2 rounded-md"
+                        className="bg-color-success hover:bg-color-success text-xs py-1 px-2 rounded-md shadow-sm"
                       >
                         Sync to Clio
                       </button>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-color-text-secondary">
                       {intake.riskAlerts && intake.riskAlerts.length > 0 ? (
-                        <ul className="list-disc list-inside text-red-600">
+                        <ul className="list-disc list-inside text-color-error">
                           {intake.riskAlerts.map((alert, index) => (
                             <li key={index}>{alert}</li>
                           ))}
                         </ul>
                       ) : (
-                        <span className="text-green-600">No immediate risks</span>
+                        <span className="text-color-success">No immediate risks</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-color-text-secondary">
                       {intake.summary ? (
                         <p className="line-clamp-3">{intake.summary}</p>
                       ) : (
-                        <span className="text-gray-500">No summary yet</span>
+                        <span className="text-color-text-secondary">No summary yet</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-color-text-secondary">
                       {new Date(intake.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
@@ -210,7 +210,7 @@ const AdminDashboardScreen = () => {
             </table>
           </div>
         ) : (
-          <p className="text-center py-8 text-gray-600">No intakes found. Create a new one!</p>
+          <p className="text-center py-8 text-color-text-secondary">No intakes found. Create a new one!</p>
         )}
       </div>
     </div>

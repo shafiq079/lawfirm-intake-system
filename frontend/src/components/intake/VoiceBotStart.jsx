@@ -144,28 +144,28 @@ const VoiceBotStart = ({ onAutoFill, intakeLink }) => {
   };
 
   return (
-    <div className="flex flex-col h-[90vh] bg-white rounded-lg shadow-lg overflow-hidden">
+    <div className="flex flex-col h-screen bg-color-secondary rounded-lg shadow-lg overflow-hidden transition-colors duration-300 ease-in-out">
       {/* Chat Header */}
-      <div className="bg-gray-700 text-white p-4 flex items-center justify-between">
+      <div className="bg-color-primary text-color-text p-4 flex items-center justify-between shadow-md">
         <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3">
+          <div className="w-10 h-10 rounded-full bg-color-border flex items-center justify-center mr-3">
             {/* Placeholder for avatar */}
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-color-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
           <div>
             <h3 className="font-semibold">AI Voice Assistant</h3>
-            <p className="text-sm">How can I help you today?</p>
+            <p className="text-sm text-color-text-secondary">How can I help you today?</p>
           </div>
         </div>
       </div>
 
       {/* Chat Body - Conversation History */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50">
+      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-color-primary">
         {conversationHistory.map((msg, index) => (
           <div key={index} className={`flex ${msg.speaker === 'bot' ? 'justify-start' : 'justify-end'}`}>
-            <div className={`max-w-[70%] p-3 rounded-lg shadow-md ${msg.speaker === 'bot' ? 'bg-gray-200 text-gray-800 rounded-bl-none' : 'bg-blue-500 text-white rounded-br-none'}`}>
+            <div className={`max-w-[70%] p-3 rounded-lg shadow-md ${msg.speaker === 'bot' ? 'bg-color-secondary text-color-text rounded-bl-none' : 'bg-color-accent text-white rounded-br-none'}`}>
               {msg.text}
             </div>
           </div>
@@ -174,16 +174,16 @@ const VoiceBotStart = ({ onAutoFill, intakeLink }) => {
       </div>
 
       {/* Chat Input Area - now just buttons */}
-      <div className="p-4 bg-gray-100 border-t border-gray-200">
+      <div className="p-4 bg-color-primary border-t border-color-border">
         <div className="flex items-center justify-center space-x-3">
           <button
             type="button"
             onClick={isRecording ? stopRecording : startRecording}
-            className={`p-3 rounded-full shadow-lg transition-all duration-300 ${isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+            className={`p-3 rounded-full shadow-lg transition-all duration-300 ${isRecording ? 'bg-color-error hover:bg-color-error' : 'bg-color-accent hover:bg-color-accent'}`}
             title={isRecording ? 'Stop Recording' : 'Start Recording'}
           >
             {/* Microphone Icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 " viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M7 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a3 3 0 00-3-3h-4zm2 14v-2m-6 0H3.5A3.5 3.5 0 010 14.5V11a1 1 0 012 0v3.5c0 .827.673 1.5 1.5 1.5H9v-2zm7 0v2h3.5A3.5 3.5 0 0020 14.5V11a1 1 0 01-2 0v3.5c0 .827-.673 1.5-1.5 1.5H11v-2z" clipRule="evenodd" />
             </svg>
           </button>
@@ -191,11 +191,11 @@ const VoiceBotStart = ({ onAutoFill, intakeLink }) => {
           <button
             type="button"
             onClick={handleSkipQuestion}
-            className="p-3 rounded-full bg-gray-300 hover:bg-gray-400 shadow-lg transition-all duration-300"
+            className="p-3 rounded-full bg-color-border hover:bg-color-border shadow-lg transition-all duration-300"
             title="Skip Question"
           >
             {/* Skip Icon (e.g., a fast-forward icon or simple arrow) */}
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-color-text" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
             </svg>
           </button>

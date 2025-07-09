@@ -1,0 +1,32 @@
+.main-content {
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  min-height: calc(100vh - 64px); /* Adjust based on header height */
+  padding: var(--spacing-lg);
+  transition: var(--theme-transition);
+}
+
+/* Toastify overrides for theme */
+.Toastify__toast-container {
+  font-family: var(--font-family-primary);
+}
+
+.Toastify__toast--success {
+  background-color: var(--color-success) !important;
+  color: white !important;
+}
+
+.Toastify__toast--error {
+  background-color: var(--color-error) !important;
+  color: white !important;
+}
+
+.Toastify__toast--warning {
+  background-color: var(--color-warning) !important;
+  color: white !important;
+}
+
+.Toastify__toast--info {
+  background-color: var(--color-accent) !important;
+  color: white !important;
+}

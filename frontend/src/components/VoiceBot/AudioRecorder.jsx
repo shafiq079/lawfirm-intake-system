@@ -24,16 +24,16 @@ const AudioRecorder = ({ onStartRecording, onStopRecording }) => {
       <button
         onClick={handleStart}
         disabled={isRecording || isProcessing}
-        className={`px-6 py-3 rounded-lg font-semibold transition duration-300
-          ${isRecording || isProcessing ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 text-white'}`}
+        className={`px-6 py-3 rounded-lg font-semibold transition duration-300 shadow-md
+          ${isRecording || isProcessing ? 'bg-color-border text-color-text-secondary cursor-not-allowed' : 'bg-color-error hover:bg-color-error text-white'}`}
       >
         {isRecording ? 'Recording...' : 'Start Recording'}
       </button>
       <button
         onClick={handleStop}
         disabled={!isRecording || isProcessing}
-        className={`px-6 py-3 rounded-lg font-semibold transition duration-300
-          ${!isRecording || isProcessing ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+        className={`px-6 py-3 rounded-lg font-semibold transition duration-300 shadow-md
+          ${!isRecording || isProcessing ? 'bg-color-border text-color-text-secondary cursor-not-allowed' : 'bg-color-accent hover:bg-color-accent text-white'}`}
       >
         Stop Recording
       </button>
