@@ -48,8 +48,15 @@ const SmartIntakeScreen = () => {
 
   const handleAutoFill = useCallback((extractedData) => {
     updateFormData(extractedData);
-    setCurrentStep(1);
-  }, [updateFormData]);
+    // If the initial input method was 'document', go directly to Review & Submit (now step 8)
+    if (inputMethod === 'document') {
+      setCurrentStep(8);
+    } else {
+      // Otherwise, if it was part of the manual/voice flow, just proceed to the next step
+      // The DocumentUpload component itself calls nextStep() after this.
+      // So, no change needed here for manual/voice flow.
+    }
+  }, [updateFormData, inputMethod]);
 
   const handleMethodSelection = (method) => {
     setInputMethod(method);
@@ -57,7 +64,7 @@ const SmartIntakeScreen = () => {
     localStorage.removeItem('currentStep');
     localStorage.setItem('inputMethod', method);
     setFormData({});
-    setCurrentStep(method === 'manual' ? 1 : 0);
+    setCurrentStep(method === 'manual' ? 1 : (method === 'document' ? 7 : 0)); // If document, go to step 7 (Document Upload)
   };
 
   const nextStep = useCallback(() => {
@@ -76,23 +83,13 @@ const SmartIntakeScreen = () => {
       case 4: return 'employment';
       case 5: return 'family';
       case 6: return 'legal';
+      case 7: return 'document'; // New section name for document upload
       default: return '';
     }
   };
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0:
-        if (inputMethod === 'document') {
-          return <DocumentUpload onAutoFill={handleAutoFill} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} />;
-        } else if (inputMethod === 'voice') {
-          return (
-            <div className="w-full">
-              <VoiceBotStart onAutoFill={handleAutoFill} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} />
-            </div>
-          );
-        }
-        return null;
       case 1:
         return <PersonalInfoStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} />;
       case 2:
@@ -105,9 +102,15 @@ const SmartIntakeScreen = () => {
         return <FamilyStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} />;
       case 6:
         return <LegalHistoryStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} />;
-      case 7:
+      case 7: // Document Upload is now a regular step
+        return <DocumentUpload onAutoFill={handleAutoFill} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} formData={formData} updateFormData={updateFormData} />;
+      case 8: // Review & Submit is now step 8
         return <ReviewSubmitStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} />;
       default:
+        // This handles cases where currentStep is 0 (initial method selection) or beyond 8
+        if (inputMethod === 'document' && currentStep === 0) {
+          return <DocumentUpload onAutoFill={handleAutoFill} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} formData={formData} updateFormData={updateFormData} />;
+        }
         return <ReviewSubmitStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} />;
     }
   };
@@ -124,59 +127,60 @@ const SmartIntakeScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-6xl flex flex-col">
-        {!inputMethod ? (
-          <InputMethodSelector onSelect={handleMethodSelection} />
-        ) : (
-          <>
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={handleChangeMethod}
-                className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
-              >
-                Change Input Method
-              </button>
-            </div>
-
-            <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Smart Intake Form</h1>
-
-            <div className="flex justify-between mb-6">
-              {inputMethod === 'manual' && [
-                { id: 1, name: 'Personal Info' },
-                { id: 2, name: 'Immigration Intent' },
-                { id: 3, name: 'Passport & Travel' },
-                { id: 4, name: 'Employment & Education' },
-                { id: 5, name: 'Family Details' },
-                { id: 6, name: 'Legal History' },
-                { id: 7, name: 'Review & Consent' },
-              ].map((step) => (
-                <div
-                  key={step.id}
-                  className={`flex-1 text-center py-2 rounded-full text-sm font-medium ${
-                    currentStep === step.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-                  }`}
+    <div className="min-h-screen bg-gray-100 flex justify-center p-4">
+      <div className="flex w-full max-w-7xl gap-6">
+        {/* Main Form Content */}
+        <div className="flex-1 bg-white p-8 rounded-lg shadow-xl flex flex-col">
+          {!inputMethod ? (
+            <InputMethodSelector onSelect={handleMethodSelection} />
+          ) : (
+            <>
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={handleChangeMethod}
+                  className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
                 >
-                  {step.name}
-                </div>
-              ))}
-            </div>
+                  Change Input Method
+                </button>
+              </div>
 
-            <div className="flex gap-6">
+              <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Smart Intake Form</h1>
+
+              <div className="flex justify-between mb-6">
+                {inputMethod === 'manual' && [
+                  { id: 1, name: 'Personal Info' },
+                  { id: 2, name: 'Immigration Intent' },
+                  { id: 3, name: 'Passport & Travel' },
+                  { id: 4, name: 'Employment & Education' },
+                  { id: 5, name: 'Family Details' },
+                  { id: 6, name: 'Legal History' },
+                  { id: 7, name: 'Document Upload' }, // New step
+                  { id: 8, name: 'Review & Consent' }, // Shifted step
+                ].map((step) => (
+                  <div
+                    key={step.id}
+                    className={`flex-1 text-center py-2 rounded-full text-sm font-medium ${
+                      currentStep === step.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {step.name}
+                  </div>
+                ))}
+              </div>
+
               <div className="flex-1">{renderStep()}</div>
+            </>
+          )}
+        </div>
 
-              {inputMethod === 'voice' && currentStep > 0 && (
-                <div className="w-[300px]">
-                  <VoiceBotStart
-                    sectionName={getSectionNameByStep(currentStep)}
-                    intakeLink={intakeLink}
-                    onAutoFill={updateFormData}
-                  />
-                </div>
-              )}
-            </div>
-          </>
-        )}
+        {/* Voice Bot Sidebar */}
+        <div className="w-[350px] bg-white p-4 rounded-lg shadow-xl flex flex-col">
+          <VoiceBotStart
+            sectionName={getSectionNameByStep(currentStep)}
+            intakeLink={intakeLink}
+            onAutoFill={updateFormData}
+          />
+        </div>
       </div>
     </div>
   );
