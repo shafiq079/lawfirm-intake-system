@@ -1,13 +1,13 @@
 # Auto Intake Platform
 
-<!-- Deepgram Logo -->
-<img src="https://www.datocms-assets.com/96965/1683539914-logo.svg" alt="Deepgram Logo" width="100"/>
+<p align="center">
+  <img src="https://www.datocms-assets.com/96965/1683539914-logo.svg" alt="Deepgram Logo" width="120"/>
+  &nbsp;&nbsp;&nbsp;
+  <img src="https://cloudinary-res.cloudinary.com/image/upload/c_scale,dpr_2.0,q_auto,w_120/cloudinary_logo_for_white_bg.svg" alt="Cloudinary Logo" width="120"/>
+  &nbsp;&nbsp;&nbsp;
+  <img src="https://d1z9ara1acwrvo.cloudfront.net/assets/logo/clio-logo-99c8fde363d56f656c7c6687b29ae8f04fa76ee4a65fe66757008097b0cc17b6.svg" alt="Clio Logo" width="120"/>
+</p>
 
-<!-- Cloudinary Logo -->
-<img src="https://cloudinary-res.cloudinary.com/image/upload/c_scale,dpr_2.0,q_auto,w_156/cloudinary_logo_for_white_bg.svg" alt="Cloudinary Logo" width="100"/>
-
-<!-- Clio Logo -->
-<img src="https://d1z9ara1acwrvo.cloudfront.net/assets/logo/clio-logo-99c8fde363d56f656c7c6687b29ae8f04fa76ee4a65fe66757008097b0cc17b6.svg" alt="Clio Logo" width="100"/>
 
 
 ## 📝 Project Goal
