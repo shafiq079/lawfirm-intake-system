@@ -50,6 +50,14 @@ const intakeSchema = mongoose.Schema(
     hasPreviousImmigrationApps: { type: Boolean, default: false },
     previousImmigrationAppDetails: { type: String, default: '' },
 
+    // Documents Uploaded
+    uploadedDocuments: [
+      {
+        documentType: { type: String, required: true },
+        cloudinaryUrl: { type: String, required: true },
+      },
+    ],
+
     // Meta
     intakeType: {
       type: String,

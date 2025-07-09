@@ -2,10 +2,14 @@ const multer = require('multer');
 const { createWorker } = require('tesseract.js');
 const asyncHandler = require('express-async-handler');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const cloudinary = require('cloudinary').v2;
 
 // Set up multer for file uploads
 const storage = multer.memoryStorage(); // Store files in memory
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10 MB file size limit
+});
 
 // Creates a client for Google Vision AI
 const visionClient = null;
@@ -98,4 +102,30 @@ const processImage = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { upload, processImage };
+// @desc    Upload a required document to Cloudinary
+// @route   POST /api/uploads/required-document
+// @access  Private
+const uploadRequiredDocument = asyncHandler(async (req, res) => {
+  console.log('req.file in uploadRequiredDocument:', req.file); // Add this line
+  if (!req.file) {
+    res.status(400);
+    throw new Error('No file uploaded.');
+  }
+
+  try {
+    // Upload image to cloudinary
+    const b64 = Buffer.from(req.file.buffer).toString("base64");
+    let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+    const result = await cloudinary.uploader.upload(dataURI, {
+      folder: "intake_documents", // Optional: organize uploads in a specific folder
+    });
+
+    res.status(200).json({ cloudinaryUrl: result.secure_url });
+  } catch (error) {
+    console.error("Error uploading to Cloudinary:", error);
+    res.status(500);
+    throw new Error('Error uploading document to Cloudinary.');
+  }
+});
+
+module.exports = { upload, processImage, uploadRequiredDocument };

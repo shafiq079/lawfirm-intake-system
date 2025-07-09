@@ -1,15 +1,35 @@
-
 const asyncHandler = require('express-async-handler');
 const Intake = require('../models/intakeModel');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { syncToClio, getClioStatus, syncIntakeToClio } = require('./clioController');
 const User = require('../models/userModel');
 const sendEmail = require('../utils/sendEmail');
+const { getRequiredDocuments } = require('../utils/documentRequirements');
 
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const generateSummary = async (formData) => {  let summary = "";  if (formData.personalInfo) {    summary += `Personal Information:\n`;    summary += `  Name: ${formData.personalInfo.firstName || ''} ${formData.personalInfo.lastName || ''}\n`;    summary += `  Date of Birth: ${formData.personalInfo.dateOfBirth || ''}\n`;    summary += `  Nationality: ${formData.personalInfo.nationality || ''}\n`;    summary += `  Phone: ${formData.personalInfo.phoneNumber || ''}\n`;    summary += `  Email: ${formData.personalInfo.email || ''}\n`;  }  if (formData.immigrationIntent) {    summary += `\nImmigration Intent:\n`;    summary += `  Visa Type: ${formData.immigrationIntent.visaType || ''}\n`;    summary += `  Purpose of Visit: ${formData.immigrationIntent.purposeOfVisit || ''}\n`;    summary += `  Intended Duration: ${formData.immigrationIntent.intendedDuration || ''}\n`;    summary += `  Sponsor Info: ${formData.immigrationIntent.sponsorInformation || ''}\n`;  }  if (formData.passportTravel) {    summary += `\nPassport & Travel:\n`;    summary += `  Passport Number: ${formData.passportTravel.passportNumber || ''}\n`;    summary += `  Expiry Date: ${formData.passportTravel.expiryDate || ''}\n`;    summary += `  Country of Issue: ${formData.passportTravel.countryOfIssue || ''}\n`;    summary += `  Previous Entries: ${formData.passportTravel.previousEntries || ''}\n`;    summary += `  Current Status: ${formData.passportTravel.currentStatus || ''}\n`;  }  if (formData.familyInformation) {    summary += `\nFamily Information:\n`;    summary += `  Marital Status: ${formData.familyInformation.maritalStatus || ''}\n`;    summary += `  Spouse Details: ${formData.familyInformation.spouseDetails || ''}\n`;    summary += `  Children Count: ${formData.familyInformation.childrenCount || ''}\n`;    summary += `  Family in US: ${formData.familyInformation.familyInUS || ''}\n`;    summary += `  Emergency Contact: ${formData.familyInformation.emergencyContact || ''}\n`;  }  if (formData.legalHistory) {    summary += `\nLegal History:\n`;    summary += `  Criminal Record: ${formData.legalHistory.criminalRecord ? 'Yes' : 'No'}\n`;    summary += `  Immigration Violations: ${formData.legalHistory.immigrationViolations ? 'Yes' : 'No'}\n`;    summary += `  Deportation History: ${formData.legalHistory.deportationHistory ? 'Yes' : 'No'}\n`;    summary += `  Pending Cases: ${formData.legalHistory.pendingCases ? 'Yes' : 'No'}\n`;  }  if (formData.previousApplications) {    summary += `\nPrevious Applications:\n`;    summary += `  Prior Visa Applications: ${formData.previousApplications.priorVisaApplications ? 'Yes' : 'No'}\n`;    summary += `  Refusal History: ${formData.previousApplications.refusalHistory ? 'Yes' : 'No'}\n`;    summary += `  Application Numbers: ${formData.previousApplications.applicationNumbers || ''}\n`;  }  if (formData.employmentEducation) {    summary += `\nEmployment/Education:\n`;    summary += `  Current Job: ${formData.employmentEducation.currentJob || ''}\n`;    summary += `  Education Level: ${formData.employmentEducation.educationLevel || ''}\n`;    summary += `  Skills: ${formData.employmentEducation.skills || ''}\n`;    summary += `  Income: ${formData.employmentEducation.income || ''}\n`;    summary += `  Work Authorization: ${formData.employmentEducation.workAuthorization ? 'Yes' : 'No'}\n`;  }  if (formData.reviewSubmit) {    summary += `\nReview & Submit:\n`;    summary += `  Data Review: ${formData.reviewSubmit.dataReview ? 'Accurate' : 'Not Accurate'}\n`;    summary += `  Digital Signature: ${formData.reviewSubmit.digitalSignature || ''}\n`;  }  return summary;};
+
+// @desc    Get required documents based on form data
+// @route   POST /api/intakes/required-documents
+// @access  Public (or Private if intakeLink is used for auth)
+const getRequiredDocumentsForIntake = asyncHandler(async (req, res) => {
+  const { formData } = req.body;
+
+  console.log('Received formData for document requirements:', JSON.stringify(formData, null, 2));
+
+  if (!formData) {
+    res.status(400);
+    throw new Error('Form data is required to determine documents.');
+  }
+
+  const requiredDocs = getRequiredDocuments(formData);
+  console.log('Determined required documents:', requiredDocs);
+  res.json(requiredDocs);
+});
+
+
 
 // @desc    Create new intake
 // @route   POST /api/intakes
@@ -141,4 +161,4 @@ Your Legal Team`;
   }
 });
 
-module.exports = { createIntake, getIntakes, getIntakeByLink, submitIntakeForm, getIntakeById };
+module.exports = { createIntake, getIntakes, getIntakeByLink, submitIntakeForm, getIntakeById, getRequiredDocumentsForIntake };
