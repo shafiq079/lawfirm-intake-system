@@ -25,6 +25,7 @@ const SmartIntakeScreen = () => {
   });
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
     const savedData = localStorage.getItem('intakeFormData');
@@ -88,6 +89,10 @@ const SmartIntakeScreen = () => {
     }
   };
 
+  const handleSubmissionSuccess = () => {
+    setIsSubmitted(true);
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -105,13 +110,13 @@ const SmartIntakeScreen = () => {
       case 7: // Document Upload is now a regular step
         return <DocumentUpload onAutoFill={handleAutoFill} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} formData={formData} updateFormData={updateFormData} />;
       case 8: // Review & Submit is now step 8
-        return <ReviewSubmitStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} />;
+        return <ReviewSubmitStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} onSubmissionSuccess={handleSubmissionSuccess} />;
       default:
         // This handles cases where currentStep is 0 (initial method selection) or beyond 8
         if (inputMethod === 'document' && currentStep === 0) {
           return <DocumentUpload onAutoFill={handleAutoFill} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} formData={formData} updateFormData={updateFormData} />;
         }
-        return <ReviewSubmitStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} />;
+        return <ReviewSubmitStep formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} intakeLink={intakeLink} onSubmissionSuccess={handleSubmissionSuccess} />;
     }
   };
 
@@ -135,6 +140,7 @@ const SmartIntakeScreen = () => {
             <InputMethodSelector onSelect={handleMethodSelection} />
           ) : (
             <>
+              {!isSubmitted && (
               <div className="flex justify-end mb-4">
                 <button
                   onClick={handleChangeMethod}
@@ -143,30 +149,11 @@ const SmartIntakeScreen = () => {
                   Change Input Method
                 </button>
               </div>
+              )}
 
               <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Smart Intake Form</h1>
 
-              <div className="flex justify-between mb-6">
-                {inputMethod === 'manual' && [
-                  { id: 1, name: 'Personal Info' },
-                  { id: 2, name: 'Immigration Intent' },
-                  { id: 3, name: 'Passport & Travel' },
-                  { id: 4, name: 'Employment & Education' },
-                  { id: 5, name: 'Family Details' },
-                  { id: 6, name: 'Legal History' },
-                  { id: 7, name: 'Document Upload' }, // New step
-                  { id: 8, name: 'Review & Consent' }, // Shifted step
-                ].map((step) => (
-                  <div
-                    key={step.id}
-                    className={`flex-1 text-center py-2 rounded-full text-sm font-medium ${
-                      currentStep === step.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    {step.name}
-                  </div>
-                ))}
-              </div>
+   
 
               <div className="flex-1">{renderStep()}</div>
             </>

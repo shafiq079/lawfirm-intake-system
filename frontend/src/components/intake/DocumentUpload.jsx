@@ -149,7 +149,7 @@ const DocumentUpload = ({ onAutoFill, nextStep, prevStep, intakeLink, formData, 
                   {getButtonText(docType)}
                 </button>
                 {uploadedDocuments[docType]?.status === 'uploaded' && (
-                  <span className="text-xs text-green-600 ml-2">Uploaded: {uploadedDocuments[docType].fileName}</span>
+                  <span className="text-xs text-green-600 ml-2"></span>
                 )}
                 {uploadedDocuments[docType]?.status === 'error' && (
                   <span className="text-xs text-red-600 ml-2">Upload failed.</span>

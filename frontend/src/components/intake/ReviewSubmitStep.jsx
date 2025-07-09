@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { submitIntake } from '../../features/intakeSlice';
 
-const ReviewSubmitStep = ({ formData, prevStep, intakeLink }) => {
+const ReviewSubmitStep = ({ formData, prevStep, intakeLink, onSubmissionSuccess }) => {
   const dispatch = useDispatch();
   const [confirmAccuracy, setConfirmAccuracy] = useState(false);
   const [consentToShare, setConsentToShare] = useState(false);
@@ -15,6 +15,9 @@ const ReviewSubmitStep = ({ formData, prevStep, intakeLink }) => {
       try {
         await dispatch(submitIntake({ intakeLink, ...formData })).unwrap();
         setSubmitted(true);
+        if (onSubmissionSuccess) {
+          onSubmissionSuccess();
+        }
         localStorage.removeItem('intakeFormData');
         localStorage.removeItem('intakeCurrentStep');
       } catch (error) {
