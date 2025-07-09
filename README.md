@@ -1,8 +1,8 @@
-# 🚗 Auto Intake Platform
+# Auto Intake Platform
 
-![Deepgram Logo](https://deepgram.com/images/logo.svg)
-![Cloudinary Logo](https://cloudinary.com/images/logo_cloudinary_white.svg)
-![Clio Logo](https://www.clio.com/wp-content/uploads/2023/09/Clio-Logo-Blue.png)
+![Deepgram Logo](https://www.datocms-assets.com/96965/1683539914-logo.svg)
+![Cloudinary Logo](https://cloudinary-res.cloudinary.com/image/upload/c_scale,dpr_2.0,q_auto,w_156/cloudinary_logo_for_white_bg.svg)
+![Clio Logo](https://d1z9ara1acwrvo.cloudfront.net/assets/logo/clio-logo-99c8fde363d56f656c7c6687b29ae8f04fa76ee4a65fe66757008097b0cc17b6.svg)
 
 ## 📝 Project Goal
 
